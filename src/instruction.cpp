@@ -50,3 +50,8 @@ bool Instruction::get_update_condition_flags()
 {
 	return update_flags;
 }
+
+condition_codes Instruction::get_condition_code()
+{
+	return condition_code;
+}

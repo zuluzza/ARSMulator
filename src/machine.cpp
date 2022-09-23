@@ -43,6 +43,12 @@ void Machine::execute_add(Instruction i)
 {
 	assert(i.get_opcode() == opcodes::ADD);
 
+	// only executed if the condition code flags in the CPSR meet the specified condition
+	if (!meets_condition_code(i.get_condition_code()))
+	{
+		return;
+	}
+
 	const uint32_t register_to_write = i.get_register_1();
 	assert(register_to_write < REGISTER_COUNT);
 
@@ -83,4 +89,50 @@ void Machine::print_registers()
 uint32_t Machine::get_current_program_status_register()
 {
 	return current_program_status_register;
+}
+
+
+bool Machine::meets_condition_code(condition_codes code)
+{
+	switch(code)
+	{
+		case condition_codes::EQ:
+			return BITMASK_CPSR_Z & current_program_status_register;
+		case condition_codes::NE:
+			return !static_cast<bool>(BITMASK_CPSR_Z & current_program_status_register);
+		case condition_codes::CS:
+			return BITMASK_CPSR_C & current_program_status_register;
+		case condition_codes::CC:
+			return !static_cast<bool>(BITMASK_CPSR_C & current_program_status_register);
+		case condition_codes::MI:
+			return BITMASK_CPSR_N & current_program_status_register;
+		case condition_codes::PL:
+			return !static_cast<bool>(BITMASK_CPSR_N & current_program_status_register);
+		case condition_codes::VS:
+			return BITMASK_CPSR_V & current_program_status_register;
+		case condition_codes::VC:
+			return !static_cast<bool>(BITMASK_CPSR_V & current_program_status_register);
+		case condition_codes::HI:
+			return (BITMASK_CPSR_C & current_program_status_register) && !static_cast<bool>(BITMASK_CPSR_Z & current_program_status_register);
+		case condition_codes::LS:
+			return !static_cast<bool>(BITMASK_CPSR_C & current_program_status_register) || (BITMASK_CPSR_Z & current_program_status_register);
+		case condition_codes::GE:
+			return static_cast<bool>(BITMASK_CPSR_N & current_program_status_register) == static_cast<bool>(BITMASK_CPSR_V & current_program_status_register);
+		case condition_codes::LT:
+			return static_cast<bool>(BITMASK_CPSR_N & current_program_status_register) != static_cast<bool>(BITMASK_CPSR_V & current_program_status_register);
+		case condition_codes::GT:
+			return !static_cast<bool>(BITMASK_CPSR_Z & current_program_status_register) && (static_cast<bool>(BITMASK_CPSR_N & current_program_status_register) == static_cast<bool>(BITMASK_CPSR_V & current_program_status_register));
+		case condition_codes::LE:
+			return (BITMASK_CPSR_Z & current_program_status_register) && (static_cast<bool>(BITMASK_CPSR_N & current_program_status_register) != static_cast<bool>(BITMASK_CPSR_V & current_program_status_register));
+		default:
+			//TODO log missing code
+		case condition_codes::AL: // intentional fall-through
+		case condition_codes::NONE: // intentional fall-through
+			return true;
+	}
+}
+
+void Machine::set_current_program_status_register(uint32_t register_value)
+{
+	current_program_status_register = register_value;
 }

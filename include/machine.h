@@ -26,7 +26,9 @@ public:
 	void set_register_value(uint8_t reg_number, int32_t value);
 	int32_t get_register_value(uint8_t reg_number);
 	uint32_t get_current_program_status_register();
+	void set_current_program_status_register(uint32_t register_value);
 	void print_registers();
+	bool meets_condition_code(condition_codes code);
 private:
 	void execute_add(Instruction i);
 
