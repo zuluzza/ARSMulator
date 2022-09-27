@@ -7,9 +7,15 @@
 
 #include <cmath>
 
-TEST_CASE("Machine, meets_condition_code->true") {
-  Machine m(256);
+class MachineTestFixture {
+public:
+  MachineTestFixture() : m(1024) {}
 
+protected:
+  Machine m;
+};
+
+TEST_CASE_METHOD(MachineTestFixture, "Machine, meets_condition_code->true") {
   CHECK(m.meets_condition_code(condition_codes::NONE));
   CHECK(m.meets_condition_code(condition_codes::AL));
   CHECK(m.meets_condition_code(condition_codes::NE));
@@ -55,9 +61,7 @@ TEST_CASE("Machine, meets_condition_code->true") {
   CHECK(m.meets_condition_code(condition_codes::LE));
 }
 
-TEST_CASE("Machine, meets_condition_code->false") {
-  Machine m(256);
-
+TEST_CASE_METHOD(MachineTestFixture, "Machine, meets_condition_code->false") {
   CHECK(false == m.meets_condition_code(condition_codes::EQ));
   CHECK(false == m.meets_condition_code(condition_codes::CS));
   CHECK(false == m.meets_condition_code(condition_codes::MI));
@@ -107,8 +111,7 @@ TEST_CASE("Machine, meets_condition_code->false") {
   CHECK(false == m.meets_condition_code(condition_codes::LE));
 }
 
-TEST_CASE("Machine, execute ADD") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture, "Machine, execute ADD") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, false, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 2);
@@ -119,8 +122,8 @@ TEST_CASE("Machine, execute ADD") {
   CHECK(0x00 == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute ADD and update zero condition flag") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute ADD and update zero condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, -10);
@@ -132,8 +135,8 @@ TEST_CASE("Machine, execute ADD and update zero condition flag") {
         m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute ADD and update negative condition flag") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute ADD and update negative condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, -20);
@@ -144,8 +147,8 @@ TEST_CASE("Machine, execute ADD and update negative condition flag") {
   CHECK(BITMASK_CPSR_N == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute ADD and update carry condition flag") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute ADD and update carry condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, std::pow(2, 32) - 1);
@@ -158,8 +161,8 @@ TEST_CASE("Machine, execute ADD and update carry condition flag") {
   CHECK(BITMASK_CPSR_C == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute ADD and update overflow condition flag") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute ADD and update overflow condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, std::pow(2, 31) - 1);
@@ -171,8 +174,8 @@ TEST_CASE("Machine, execute ADD and update overflow condition flag") {
   CHECK(BITMASK_CPSR_V == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, executing ADD prevented by condition code") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, executing ADD prevented by condition code") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 2);
@@ -184,8 +187,7 @@ TEST_CASE("Machine, executing ADD prevented by condition code") {
   CHECK(BITMASK_CPSR_Z == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute SUB") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture, "Machine, execute SUB") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::SUB, condition_codes::NONE, false, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 5);
@@ -196,8 +198,8 @@ TEST_CASE("Machine, execute SUB") {
   CHECK(0x00 == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute SUB and update zero condition flag") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute SUB and update zero condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::SUB, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 10);
@@ -209,8 +211,8 @@ TEST_CASE("Machine, execute SUB and update zero condition flag") {
         m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute SUB and update negative condition flag") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute SUB and update negative condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::SUB, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 15);
@@ -221,8 +223,8 @@ TEST_CASE("Machine, execute SUB and update negative condition flag") {
   CHECK(BITMASK_CPSR_N == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute SUB and update carry condition flag") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute SUB and update carry condition flag") {
   m.set_register_value(1, Machine_byte(8));
   Instruction i(opcodes::SUB, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 1);
@@ -233,8 +235,8 @@ TEST_CASE("Machine, execute SUB and update carry condition flag") {
   CHECK(BITMASK_CPSR_C == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute SUB and update overflow condition flag") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute SUB and update overflow condition flag") {
   m.set_register_value(1,
                        Machine_byte(std::numeric_limits<int32_t>::min() + 1));
   Instruction i(opcodes::SUB, condition_codes::NONE, true, update_modes::NONE,
@@ -249,8 +251,8 @@ TEST_CASE("Machine, execute SUB and update overflow condition flag") {
         m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, prevent execution of SUB by condition flag") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, prevent execution of SUB by condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::SUB, condition_codes::NE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 5);
@@ -262,8 +264,7 @@ TEST_CASE("Machine, prevent execution of SUB by condition flag") {
   CHECK(BITMASK_CPSR_Z == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute AND") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture, "Machine, execute AND") {
   m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
   Instruction i(opcodes::AND, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 0b101110);
@@ -275,8 +276,7 @@ TEST_CASE("Machine, execute AND") {
   CHECK(0x00000000 == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute ORR") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture, "Machine, execute ORR") {
   m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("000101"))));
   Instruction i(opcodes::ORR, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 0b101110);
@@ -288,8 +288,7 @@ TEST_CASE("Machine, execute ORR") {
   CHECK(0x00000000 == m.get_current_program_status_register());
 }
 
-TEST_CASE("Machine, execute exclusive or (EOR)") {
-  Machine m(1024);
+TEST_CASE_METHOD(MachineTestFixture, "Machine, execute exclusive or (EOR)") {
   m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
   Instruction i(opcodes::EOR, condition_codes::NONE, true, update_modes::NONE,
                 shift_ops::NONE, 0, 1, 0b101110);
