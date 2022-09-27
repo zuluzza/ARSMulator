@@ -25,11 +25,18 @@ Machine::~Machine() {
 
 void Machine::execute(Instruction i) {
   switch (i.get_opcode()) {
-  case opcodes::ADD:
-    execute_add(i);
+  case opcodes::ADC:
+    execute_add(i, true);
     break;
-  case opcodes::SUB:
-    execute_subtract(i);
+  case opcodes::ADD:
+    execute_add(i, false);
+    break;
+  case opcodes::RSB:
+  case opcodes::RSC:
+  case opcodes::SBC: // intentional fall-through
+  case opcodes::SUB: // intentional fall-through
+    execute_subtract(i, ((i.get_opcode() == opcodes::SBC) ||
+                         (i.get_opcode() == opcodes::RSC)));
     break;
   case opcodes::NONE:
     // TODO add a log?
@@ -38,7 +45,7 @@ void Machine::execute(Instruction i) {
   }
 }
 
-void Machine::execute_add(Instruction i) {
+void Machine::execute_add(Instruction i, bool use_carry) {
   assert(i.get_opcode() == opcodes::ADD);
 
   // only executed if the condition code flags in the CPSR meet the specified
@@ -51,6 +58,7 @@ void Machine::execute_add(Instruction i) {
   assert(register_to_write < REGISTER_COUNT);
 
   Machine_byte operand_byte(i.get_second_operand());
+  registers[i.get_register_2()].set_carry(use_carry);
   registers[register_to_write] = registers[i.get_register_2()] + operand_byte;
 
   if (i.get_update_condition_flags()) {
@@ -72,7 +80,7 @@ void Machine::execute_add(Instruction i) {
   }
 }
 
-void Machine::execute_subtract(Instruction i) {
+void Machine::execute_subtract(Instruction i, bool use_carry) {
   assert(i.get_opcode() == opcodes::SUB);
 
   if (!meets_condition_code(i.get_condition_code())) {
@@ -83,12 +91,19 @@ void Machine::execute_subtract(Instruction i) {
   assert(register_to_write < REGISTER_COUNT);
 
   Machine_byte operand_byte(i.get_second_operand());
-  registers[register_to_write] = registers[i.get_register_2()] - operand_byte;
+  const Machine_byte carry_byte(use_carry ? 1 : 0);
+  if (opcodes::RSB == i.get_opcode() || opcodes::RSC == i.get_opcode()) {
+    registers[register_to_write] =
+        operand_byte - registers[i.get_register_2()] - carry_byte;
+  } else {
+    registers[register_to_write] =
+        registers[i.get_register_2()] - operand_byte - carry_byte;
+  }
 
   if (i.get_update_condition_flags()) {
     const int64_t result =
         static_cast<int64_t>(registers[i.get_register_2()].to_signed32()) -
-        static_cast<int64_t>(i.get_second_operand());
+        static_cast<int64_t>(i.get_second_operand()) - carry_byte.to_signed32();
     current_program_status_register |= ((result < 0) << SHIFT_CPRS_N);
     current_program_status_register |=
         ((registers[i.get_register_2()].get_bits() == operand_byte.get_bits())

@@ -3,20 +3,32 @@
 
 #include <string>
 
+// Opcodes for all architectures from
+// https://developer.arm.com/documentation/dui0068/b/ARM-Instruction-Reference?lang=en
 enum class opcodes {
   NONE = 0,
-  ADD,
-  SUB,
-  RSB,
   ADC,
-  SBC,
+  ADD,
+  B,
+  BIC,
+  BL,
+  CMN,
+  CMP,
+  EOR,
+  LDM,
+  LDR,
+  MOV,
+  MVN,
+  ORR,
+  RSB,
   RSC,
-  MUL,
-  MLA,
-  UMULL,
-  UMLAL,
-  SMULL,
-  SMLAL
+  SBC,
+  STM,
+  STR,
+  SUB,
+  SWI,
+  TEQ,
+  TST
 };
 
 enum class condition_codes {

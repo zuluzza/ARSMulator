@@ -31,8 +31,8 @@ public:
   bool meets_condition_code(condition_codes code);
 
 private:
-  void execute_add(Instruction i);
-  void execute_subtract(Instruction i);
+  void execute_add(Instruction i, bool use_carry = false);
+  void execute_subtract(Instruction i, bool use_carry = false);
 
   std::vector<Machine_byte> registers;
   uint32_t current_program_status_register;

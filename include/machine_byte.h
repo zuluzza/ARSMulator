@@ -64,7 +64,7 @@ public:
   }
 
   bool get_carry() const { return carry; }
-
+  void set_carry(const bool use_carry) { carry = use_carry; }
   bool get_borrow() const { return borrow; }
 
 private:
