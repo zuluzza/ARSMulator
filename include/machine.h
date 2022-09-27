@@ -33,6 +33,9 @@ public:
 private:
   void execute_add(Instruction i, bool use_carry = false);
   void execute_subtract(Instruction i, bool use_carry = false);
+  void execute_and(Instruction i);
+  void execute_eor(Instruction i);
+  void execute_orr(Instruction i);
 
   std::vector<Machine_byte> registers;
   uint32_t current_program_status_register;

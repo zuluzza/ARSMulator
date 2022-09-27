@@ -9,6 +9,7 @@ enum class opcodes {
   NONE = 0,
   ADC,
   ADD,
+  AND,
   B,
   BIC,
   BL,

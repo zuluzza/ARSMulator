@@ -38,6 +38,15 @@ void Machine::execute(Instruction i) {
     execute_subtract(i, ((i.get_opcode() == opcodes::SBC) ||
                          (i.get_opcode() == opcodes::RSC)));
     break;
+  case opcodes::AND:
+    execute_and(i);
+    break;
+  case opcodes::ORR:
+    execute_orr(i);
+    break;
+  case opcodes::EOR:
+    execute_eor(i);
+    break;
   case opcodes::NONE:
     // TODO add a log?
   default:
@@ -46,8 +55,6 @@ void Machine::execute(Instruction i) {
 }
 
 void Machine::execute_add(Instruction i, bool use_carry) {
-  assert(i.get_opcode() == opcodes::ADD);
-
   // only executed if the condition code flags in the CPSR meet the specified
   // condition
   if (!meets_condition_code(i.get_condition_code())) {
@@ -81,8 +88,8 @@ void Machine::execute_add(Instruction i, bool use_carry) {
 }
 
 void Machine::execute_subtract(Instruction i, bool use_carry) {
-  assert(i.get_opcode() == opcodes::SUB);
-
+  // only executed if the condition code flags in the CPSR meet the specified
+  // condition
   if (!meets_condition_code(i.get_condition_code())) {
     return;
   }
@@ -117,6 +124,66 @@ void Machine::execute_subtract(Instruction i, bool use_carry) {
     current_program_status_register |=
         (((result >= std::pow(2, 31)) || (result < -std::pow(2, 31)))
          << SHIFT_CPRS_V);
+  }
+}
+
+void Machine::execute_and(Instruction i) {
+  // only executed if the condition code flags in the CPSR meet the specified
+  // condition
+  if (!meets_condition_code(i.get_condition_code())) {
+    return;
+  }
+  const uint32_t register_to_write = i.get_register_1();
+  assert(register_to_write < REGISTER_COUNT);
+
+  registers[register_to_write] =
+      registers[i.get_register_2()] & Machine_byte(i.get_second_operand());
+
+  if (i.get_update_condition_flags()) {
+    current_program_status_register |=
+        ((registers[register_to_write].to_signed32() < 0) << SHIFT_CPRS_N);
+    current_program_status_register |=
+        ((registers[register_to_write].to_unsigned32() == 0) << SHIFT_CPRS_Z);
+  }
+}
+
+void Machine::execute_orr(Instruction i) {
+  // only executed if the condition code flags in the CPSR meet the specified
+  // condition
+  if (!meets_condition_code(i.get_condition_code())) {
+    return;
+  }
+  const uint32_t register_to_write = i.get_register_1();
+  assert(register_to_write < REGISTER_COUNT);
+
+  registers[register_to_write] =
+      registers[i.get_register_2()] | Machine_byte(i.get_second_operand());
+
+  if (i.get_update_condition_flags()) {
+    current_program_status_register |=
+        ((registers[register_to_write].to_signed32() < 0) << SHIFT_CPRS_N);
+    current_program_status_register |=
+        ((registers[register_to_write].to_unsigned32() == 0) << SHIFT_CPRS_Z);
+  }
+}
+
+void Machine::execute_eor(Instruction i) {
+  // only executed if the condition code flags in the CPSR meet the specified
+  // condition
+  if (!meets_condition_code(i.get_condition_code())) {
+    return;
+  }
+  const uint32_t register_to_write = i.get_register_1();
+  assert(register_to_write < REGISTER_COUNT);
+
+  registers[register_to_write] =
+      registers[i.get_register_2()] ^ Machine_byte(i.get_second_operand());
+
+  if (i.get_update_condition_flags()) {
+    current_program_status_register |=
+        ((registers[register_to_write].to_signed32() < 0) << SHIFT_CPRS_N);
+    current_program_status_register |=
+        ((registers[register_to_write].to_unsigned32() == 0) << SHIFT_CPRS_Z);
   }
 }
 

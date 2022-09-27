@@ -261,3 +261,42 @@ TEST_CASE("Machine, prevent execution of SUB by condition flag") {
   CHECK(0 == m.get_register_value(0).to_signed32());
   CHECK(BITMASK_CPSR_Z == m.get_current_program_status_register());
 }
+
+TEST_CASE("Machine, execute AND") {
+  Machine m(1024);
+  m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
+  Instruction i(opcodes::AND, condition_codes::NONE, true, update_modes::NONE,
+                shift_ops::NONE, 0, 1, 0b101110);
+
+  m.set_current_program_status_register(0x00000000);
+  m.execute(i);
+
+  CHECK(0b000100 == m.get_register_value(0).to_unsigned32());
+  CHECK(0x00000000 == m.get_current_program_status_register());
+}
+
+TEST_CASE("Machine, execute ORR") {
+  Machine m(1024);
+  m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("000101"))));
+  Instruction i(opcodes::ORR, condition_codes::NONE, true, update_modes::NONE,
+                shift_ops::NONE, 0, 1, 0b101110);
+
+  m.set_current_program_status_register(0x00000000);
+  m.execute(i);
+
+  CHECK(0b101111 == m.get_register_value(0).to_unsigned32());
+  CHECK(0x00000000 == m.get_current_program_status_register());
+}
+
+TEST_CASE("Machine, execute exclusive or (EOR)") {
+  Machine m(1024);
+  m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
+  Instruction i(opcodes::EOR, condition_codes::NONE, true, update_modes::NONE,
+                shift_ops::NONE, 0, 1, 0b101110);
+
+  m.set_current_program_status_register(0x00000000);
+  m.execute(i);
+
+  CHECK(0b111011 == m.get_register_value(0).to_unsigned32());
+  CHECK(0x00000000 == m.get_current_program_status_register());
+}

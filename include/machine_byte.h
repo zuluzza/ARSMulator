@@ -63,6 +63,24 @@ public:
     return Machine_byte(result);
   }
 
+  Machine_byte operator&(const Machine_byte &second) const {
+    std::bitset<BIT_COUNT> tmp = get_bits();
+    tmp &= second.get_bits();
+    return Machine_byte(tmp);
+  }
+
+  Machine_byte operator|(const Machine_byte &second) const {
+    std::bitset<BIT_COUNT> tmp = get_bits();
+    tmp |= second.get_bits();
+    return Machine_byte(tmp);
+  }
+
+  Machine_byte operator^(const Machine_byte &second) const {
+    std::bitset<BIT_COUNT> tmp = get_bits();
+    tmp ^= second.get_bits();
+    return Machine_byte(tmp);
+  }
+
   bool get_carry() const { return carry; }
   void set_carry(const bool use_carry) { carry = use_carry; }
   bool get_borrow() const { return borrow; }
