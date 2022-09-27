@@ -2,6 +2,7 @@
 #include "instruction.h"
 
 #include <cassert>
+#include <cmath>
 #include <iostream>
 #include <limits>
 
@@ -12,7 +13,7 @@ Machine::Machine(int mem_size) {
   // Fail if it was not able to reserve memory
   assert(memory);
 
-  registers = std::vector<int32_t>(REGISTER_COUNT, 0);
+  registers = std::vector<Machine_byte>(REGISTER_COUNT, 0);
   current_program_status_register = 0;
 }
 
@@ -26,6 +27,9 @@ void Machine::execute(Instruction i) {
   switch (i.get_opcode()) {
   case opcodes::ADD:
     execute_add(i);
+    break;
+  case opcodes::SUB:
+    execute_subtract(i);
     break;
   case opcodes::NONE:
     // TODO add a log?
@@ -46,41 +50,75 @@ void Machine::execute_add(Instruction i) {
   const uint32_t register_to_write = i.get_register_1();
   assert(register_to_write < REGISTER_COUNT);
 
-  const int64_t result = static_cast<int64_t>(registers[i.get_register_2()]) +
-                         static_cast<int64_t>(i.get_second_operand());
-  registers[register_to_write] = result;
+  Machine_byte operand_byte(i.get_second_operand());
+  registers[register_to_write] = registers[i.get_register_2()] + operand_byte;
 
   if (i.get_update_condition_flags()) {
-    current_program_status_register |=
-        ((registers[register_to_write] < 0) << SHIFT_CPRS_N);
-    current_program_status_register |=
-        ((registers[register_to_write] == 0) << SHIFT_CPRS_Z);
+    const int64_t result =
+        static_cast<int64_t>(registers[i.get_register_2()].to_signed32()) +
+        static_cast<int64_t>(i.get_second_operand());
+    current_program_status_register |= ((result < 0) << SHIFT_CPRS_N);
+    current_program_status_register |= ((result == 0) << SHIFT_CPRS_Z);
 
-    // TODO these two are probably wrong??
+    // For an addition C is set to 1 if the addition produced a carry (that is,
+    // an unsigned overflow), and to 0 otherwise.
     current_program_status_register |=
-        (((result > std::numeric_limits<int32_t>::max()) ||
-          (result < std::numeric_limits<int32_t>::min()))
-         << SHIFT_CPRS_C);
+        ((registers[i.get_register_2()].get_carry()) << SHIFT_CPRS_C);
+    // Overflow occurs if the result of an add, subtract, or compare is greater
+    // than or equal to 2^31, or less than -2^31
     current_program_status_register |=
-        (((result > std::numeric_limits<int32_t>::max()) ||
-          (result < std::numeric_limits<int32_t>::min()))
+        (((result >= std::pow(2, 31)) || (result < -std::pow(2, 31)))
          << SHIFT_CPRS_V);
   }
 }
 
-void Machine::set_register_value(uint8_t reg_number, int32_t value) {
+void Machine::execute_subtract(Instruction i) {
+  assert(i.get_opcode() == opcodes::SUB);
+
+  if (!meets_condition_code(i.get_condition_code())) {
+    return;
+  }
+
+  const uint32_t register_to_write = i.get_register_1();
+  assert(register_to_write < REGISTER_COUNT);
+
+  Machine_byte operand_byte(i.get_second_operand());
+  registers[register_to_write] = registers[i.get_register_2()] - operand_byte;
+
+  if (i.get_update_condition_flags()) {
+    const int64_t result =
+        static_cast<int64_t>(registers[i.get_register_2()].to_signed32()) -
+        static_cast<int64_t>(i.get_second_operand());
+    current_program_status_register |= ((result < 0) << SHIFT_CPRS_N);
+    current_program_status_register |=
+        ((registers[i.get_register_2()].get_bits() == operand_byte.get_bits())
+         << SHIFT_CPRS_Z);
+
+    // A carry occurs if the result of a subtraction is positive
+    current_program_status_register |=
+        ((!registers[i.get_register_2()].get_borrow()) << SHIFT_CPRS_C);
+    // Overflow occurs if the result of an add, subtract, or compare is greater
+    // than or equal to 2^31, or less than -2^31
+    current_program_status_register |=
+        (((result >= std::pow(2, 31)) || (result < -std::pow(2, 31)))
+         << SHIFT_CPRS_V);
+  }
+}
+
+void Machine::set_register_value(uint8_t reg_number, Machine_byte value) {
   assert(reg_number < REGISTER_COUNT);
   registers[reg_number] = value;
 }
 
-int32_t Machine::get_register_value(uint8_t reg_number) {
+Machine_byte Machine::get_register_value(uint8_t reg_number) {
   assert(reg_number < REGISTER_COUNT);
   return registers[reg_number];
 }
 
 void Machine::print_registers() {
   for (uint8_t i = 0; i < REGISTER_COUNT; ++i) {
-    std::cout << "Register " << i << ": " << registers[i] << std::endl;
+    std::cout << "Register " << i << ": " << registers[i].get_bits()
+              << std::endl;
   }
 }
 

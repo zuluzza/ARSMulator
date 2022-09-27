@@ -47,7 +47,7 @@ public:
   Instruction(opcodes operation, condition_codes condition,
               bool update_condition_code_flags, update_modes update,
               shift_ops shift, uint32_t reg1, uint32_t reg2,
-              int32_t second_operand);
+              int64_t second_operand);
   Instruction(const Instruction &i) = default;
 
   bool has_condition_code();
@@ -69,7 +69,7 @@ private:
   shift_ops shift_op;
   uint32_t register_1;
   uint32_t register_2;
-  int32_t flex_2nd_operand;
+  int64_t flex_2nd_operand;
 };
 
 #endif // INSTRUCTION_H

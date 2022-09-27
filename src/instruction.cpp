@@ -3,7 +3,7 @@
 Instruction::Instruction(opcodes operation, condition_codes condition,
                          bool update_condition_code_flags, update_modes update,
                          shift_ops shift, uint32_t reg1, uint32_t reg2,
-                         int32_t second_operand) {
+                         int64_t second_operand) {
   opcode = operation;
   condition_code = condition;
   update_flags = update_condition_code_flags;

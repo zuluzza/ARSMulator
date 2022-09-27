@@ -2,7 +2,8 @@
 project(Catch2 LANGUAGES CXX)
 
 add_executable(unittests 
-			   test_machine.cpp)
+			   test_machine.cpp
+			   test_machine_byte.cpp)
 
 target_include_directories(unittests PUBLIC ../include)
 

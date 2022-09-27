@@ -21,15 +21,15 @@ TEST_CASE("machine_byte, construct signed") {
   Machine_byte e(1);
   CHECK(std::bitset<32>(0x00000001) == e.get_bits());
 
-  Machine_byte f(std::numeric_limits<int32_t>::max());
+  Machine_byte f(std::numeric_limits<int32_t>::max(), true);
   CHECK(std::bitset<32>(0x7FFFFFFF) == f.get_bits());
 
-  Machine_byte g(static_cast<int64_t>(std::numeric_limits<int32_t>::min()) -
-                 10);
+  Machine_byte g(static_cast<int64_t>(std::numeric_limits<int32_t>::min()) - 10,
+                 true);
   CHECK(std::bitset<32>(0x80000000) == g.get_bits());
 
-  Machine_byte h(static_cast<int64_t>(std::numeric_limits<int32_t>::max()) +
-                 10);
+  Machine_byte h(static_cast<int64_t>(std::numeric_limits<int32_t>::max()) + 10,
+                 true);
   CHECK(std::bitset<32>(0x7FFFFFFF) == h.get_bits());
 }
 
@@ -94,4 +94,20 @@ TEST_CASE("machine_byte, subtraction negative") {
   Machine_byte b(-2);
   a = a - b;
   CHECK(-1 == a.to_signed32());
+}
+
+TEST_CASE("machine_byte, addition overflow") {
+  Machine_byte a(std::numeric_limits<uint32_t>::max());
+  Machine_byte b(1);
+  a = a + b;
+  CHECK(static_cast<uint32_t>(std::numeric_limits<uint32_t>::max() + 1) ==
+        a.to_unsigned32());
+}
+
+TEST_CASE("machine_byte, subtraction underflow") {
+  Machine_byte a(std::numeric_limits<int32_t>::min());
+  Machine_byte b(10);
+  a = a - b;
+  CHECK(static_cast<int32_t>(std::numeric_limits<int32_t>::min() -
+                             (int64_t)10) == a.to_signed32());
 }

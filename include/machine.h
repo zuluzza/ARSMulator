@@ -2,6 +2,7 @@
 #define MACHINE_H
 
 #include "instruction.h"
+#include "machine_byte.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -22,8 +23,8 @@ public:
   Machine(Machine &machine) = delete;
   ~Machine();
   void execute(Instruction i);
-  void set_register_value(uint8_t reg_number, int32_t value);
-  int32_t get_register_value(uint8_t reg_number);
+  void set_register_value(uint8_t reg_number, Machine_byte value);
+  Machine_byte get_register_value(uint8_t reg_number);
   uint32_t get_current_program_status_register();
   void set_current_program_status_register(uint32_t register_value);
   void print_registers();
@@ -31,8 +32,9 @@ public:
 
 private:
   void execute_add(Instruction i);
+  void execute_subtract(Instruction i);
 
-  std::vector<int32_t> registers;
+  std::vector<Machine_byte> registers;
   uint32_t current_program_status_register;
   char *memory;
 };
