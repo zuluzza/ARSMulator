@@ -326,3 +326,39 @@ TEST_CASE_METHOD(MachineTestFixture,
   CHECK(10 == m.get_register_value(0).to_signed32());
   CHECK(BITMASK_CPSR_N == m.get_current_program_status_register());
 }
+
+TEST_CASE_METHOD(MachineTestFixture, "Machine, execute TST") {
+  m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
+  Instruction i(opcodes::TST, condition_codes::NONE, true, update_modes::NONE,
+                shift_ops::NONE, 0, 1, 0b101010);
+
+  m.set_current_program_status_register(0x00000000);
+  m.execute(i);
+
+  CHECK(0b000000 == m.get_register_value(0).to_unsigned32());
+  CHECK(BITMASK_CPSR_Z == m.get_current_program_status_register());
+}
+
+TEST_CASE_METHOD(MachineTestFixture, "Machine, execute TEQ") {
+  m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
+  Instruction i(opcodes::TEQ, condition_codes::NONE, true, update_modes::NONE,
+                shift_ops::NONE, 0, 1, 0b101110);
+
+  m.set_current_program_status_register(0x00000000);
+  m.execute(i);
+
+  CHECK(0b000000 == m.get_register_value(0).to_unsigned32());
+  CHECK(0x00000000 == m.get_current_program_status_register());
+}
+
+TEST_CASE_METHOD(MachineTestFixture, "Machine, execute bit clear") {
+  m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
+  Instruction i(opcodes::BIC, condition_codes::NONE, true, update_modes::NONE,
+                shift_ops::NONE, 0, 1, 0b010101);
+
+  m.set_current_program_status_register(0x00000000);
+  m.execute(i);
+
+  CHECK(0b000000 == m.get_register_value(0).to_unsigned32());
+  CHECK(BITMASK_CPSR_Z == m.get_current_program_status_register());
+}

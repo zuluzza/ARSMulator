@@ -34,9 +34,19 @@ void Machine::execute(Instruction i) {
   case opcodes::ADD:                  // intentional fall-through
     execute_add(i, false);
     break;
-  case opcodes::AND:
+  case opcodes::BIC:
+    i.set_second_operand(~i.get_second_operand());
     execute_and(i);
     break;
+  case opcodes::TST: // Performs bitwise but discards result
+    i.set_update_condition_flags(true);
+    i.set_register_1(REGISTER_COUNT);
+  case opcodes::AND: // intentional fall-through
+    execute_and(i);
+    break;
+  case opcodes::TEQ: // Performs exclusive or but discards result
+    i.set_update_condition_flags(true);
+    i.set_register_1(REGISTER_COUNT);
   case opcodes::EOR:
     execute_eor(i);
     break;
@@ -148,17 +158,23 @@ void Machine::execute_and(Instruction i) {
   if (!meets_condition_code(i.get_condition_code())) {
     return;
   }
-  const uint32_t register_to_write = i.get_register_1();
-  assert(register_to_write < REGISTER_COUNT);
 
-  registers[register_to_write] =
+  // Execute bitwise and
+  Machine_byte result_byte =
       registers[i.get_register_2()] & Machine_byte(i.get_second_operand());
 
+  // update flags if requested
   if (i.get_update_condition_flags()) {
     current_program_status_register |=
-        ((registers[register_to_write].to_signed32() < 0) << SHIFT_CPRS_N);
+        ((result_byte.to_signed32() < 0) << SHIFT_CPRS_N);
     current_program_status_register |=
-        ((registers[register_to_write].to_unsigned32() == 0) << SHIFT_CPRS_Z);
+        ((result_byte.to_unsigned32() == 0) << SHIFT_CPRS_Z);
+  }
+
+  // write result to register (it's not written for compare operation)
+  const uint32_t register_to_write = i.get_register_1();
+  if (register_to_write < REGISTER_COUNT) {
+    registers[register_to_write] = result_byte;
   }
 }
 
@@ -174,6 +190,7 @@ void Machine::execute_orr(Instruction i) {
   registers[register_to_write] =
       registers[i.get_register_2()] | Machine_byte(i.get_second_operand());
 
+  // update flags if requested
   if (i.get_update_condition_flags()) {
     current_program_status_register |=
         ((registers[register_to_write].to_signed32() < 0) << SHIFT_CPRS_N);
@@ -188,17 +205,23 @@ void Machine::execute_eor(Instruction i) {
   if (!meets_condition_code(i.get_condition_code())) {
     return;
   }
-  const uint32_t register_to_write = i.get_register_1();
-  assert(register_to_write < REGISTER_COUNT);
 
-  registers[register_to_write] =
+  // Execute exclusive or
+  Machine_byte result_byte =
       registers[i.get_register_2()] ^ Machine_byte(i.get_second_operand());
 
+  // update flags if requested
   if (i.get_update_condition_flags()) {
     current_program_status_register |=
-        ((registers[register_to_write].to_signed32() < 0) << SHIFT_CPRS_N);
+        ((result_byte.to_signed32() < 0) << SHIFT_CPRS_N);
     current_program_status_register |=
-        ((registers[register_to_write].to_unsigned32() == 0) << SHIFT_CPRS_Z);
+        ((result_byte.to_unsigned32() == 0) << SHIFT_CPRS_Z);
+  }
+
+  // write result to register (it's not written for compare operation)
+  const uint32_t register_to_write = i.get_register_1();
+  if (register_to_write < REGISTER_COUNT) {
+    registers[register_to_write] = result_byte;
   }
 }
 

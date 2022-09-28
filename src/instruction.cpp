@@ -33,6 +33,10 @@ void Instruction::set_register_1(uint8_t new_value) { register_1 = new_value; }
 
 int32_t Instruction::get_second_operand() { return flex_2nd_operand; }
 
+void Instruction::set_second_operand(int64_t new_value) {
+  flex_2nd_operand = new_value;
+}
+
 bool Instruction::get_update_condition_flags() { return update_flags; }
 
 void Instruction::set_update_condition_flags(bool new_status) {

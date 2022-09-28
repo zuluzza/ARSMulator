@@ -73,6 +73,7 @@ public:
   uint32_t get_register_2();
   void set_register_1(uint8_t new_value);
   int32_t get_second_operand();
+  void set_second_operand(int64_t new_value);
   bool get_update_condition_flags();
   void set_update_condition_flags(bool new_status);
 
