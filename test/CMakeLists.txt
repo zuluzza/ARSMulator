@@ -1,5 +1,5 @@
 
-project(Catch2 LANGUAGES CXX)
+project(unittests LANGUAGES CXX)
 
 add_executable(unittests 
 			   test_machine.cpp
@@ -13,3 +13,4 @@ target_link_libraries(unittests
 					  Catch2::Catch2WithMain
 					  simulator)
 
+add_test(test_all unittests)
