@@ -155,9 +155,7 @@ TEST_CASE_METHOD(MachineTestFixture,
 
   m.execute(i);
 
-  CHECK(static_cast<uint32_t>(std::pow(2, 32) + 9) ==
-        m.get_register_value(0)
-            .to_unsigned32()); // note it has overflowed the 32-bit register
+  CHECK(9 == m.get_register_value(0).to_unsigned32()); // note it has overflowed the 32-bit register
   CHECK(BITMASK_CPSR_C == m.get_current_program_status_register());
 }
 
