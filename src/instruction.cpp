@@ -29,8 +29,14 @@ bool Instruction::has_shift_op() { return shift_op == shift_ops::NONE; }
 uint32_t Instruction::get_register_1() { return register_1; }
 uint32_t Instruction::get_register_2() { return register_2; }
 
+void Instruction::set_register_1(uint8_t new_value) { register_1 = new_value; }
+
 int32_t Instruction::get_second_operand() { return flex_2nd_operand; }
 
 bool Instruction::get_update_condition_flags() { return update_flags; }
+
+void Instruction::set_update_condition_flags(bool new_status) {
+  update_flags = new_status;
+}
 
 condition_codes Instruction::get_condition_code() { return condition_code; }

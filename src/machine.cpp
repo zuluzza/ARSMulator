@@ -28,24 +28,30 @@ void Machine::execute(Instruction i) {
   case opcodes::ADC:
     execute_add(i, true);
     break;
-  case opcodes::ADD:
+  case opcodes::CMN: // Same as ADD except result is discarded
+    i.set_update_condition_flags(true);
+    i.set_register_1(REGISTER_COUNT); // discards result
+  case opcodes::ADD:                  // intentional fall-through
     execute_add(i, false);
-    break;
-  case opcodes::RSB:
-  case opcodes::RSC:
-  case opcodes::SBC: // intentional fall-through
-  case opcodes::SUB: // intentional fall-through
-    execute_subtract(i, ((i.get_opcode() == opcodes::SBC) ||
-                         (i.get_opcode() == opcodes::RSC)));
     break;
   case opcodes::AND:
     execute_and(i);
     break;
+  case opcodes::EOR:
+    execute_eor(i);
+    break;
   case opcodes::ORR:
     execute_orr(i);
     break;
-  case opcodes::EOR:
-    execute_eor(i);
+  case opcodes::CMP: // Same as SUB except result is discarded
+    i.set_update_condition_flags(true);
+    i.set_register_1(REGISTER_COUNT); // discards result
+  case opcodes::RSB:                  // intentional fall-through
+  case opcodes::RSC:                  // intentional fall-through
+  case opcodes::SBC:                  // intentional fall-through
+  case opcodes::SUB:                  // intentional fall-through
+    execute_subtract(i, ((i.get_opcode() == opcodes::SBC) ||
+                         (i.get_opcode() == opcodes::RSC)));
     break;
   case opcodes::NONE:
     // TODO add a log?
@@ -61,13 +67,12 @@ void Machine::execute_add(Instruction i, bool use_carry) {
     return;
   }
 
-  const uint32_t register_to_write = i.get_register_1();
-  assert(register_to_write < REGISTER_COUNT);
-
+  // calculate result of add operation
   Machine_byte operand_byte(i.get_second_operand());
   registers[i.get_register_2()].set_carry(use_carry);
-  registers[register_to_write] = registers[i.get_register_2()] + operand_byte;
+  Machine_byte result_byte = registers[i.get_register_2()] + operand_byte;
 
+  // update flags if requested
   if (i.get_update_condition_flags()) {
     const int64_t result =
         static_cast<int64_t>(registers[i.get_register_2()].to_signed32()) +
@@ -85,6 +90,12 @@ void Machine::execute_add(Instruction i, bool use_carry) {
         (((result >= std::pow(2, 31)) || (result < -std::pow(2, 31)))
          << SHIFT_CPRS_V);
   }
+
+  // write result to register (it's not written for compare operation)
+  const uint32_t register_to_write = i.get_register_1();
+  if (register_to_write < REGISTER_COUNT) {
+    registers[register_to_write] = result_byte;
+  }
 }
 
 void Machine::execute_subtract(Instruction i, bool use_carry) {
@@ -94,19 +105,17 @@ void Machine::execute_subtract(Instruction i, bool use_carry) {
     return;
   }
 
-  const uint32_t register_to_write = i.get_register_1();
-  assert(register_to_write < REGISTER_COUNT);
-
+  // calculate result of subtract operation
   Machine_byte operand_byte(i.get_second_operand());
   const Machine_byte carry_byte(use_carry ? 1 : 0);
+  Machine_byte result_byte(std::bitset<BIT_COUNT>(0));
   if (opcodes::RSB == i.get_opcode() || opcodes::RSC == i.get_opcode()) {
-    registers[register_to_write] =
-        operand_byte - registers[i.get_register_2()] - carry_byte;
+    result_byte = operand_byte - registers[i.get_register_2()] - carry_byte;
   } else {
-    registers[register_to_write] =
-        registers[i.get_register_2()] - operand_byte - carry_byte;
+    result_byte = registers[i.get_register_2()] - operand_byte - carry_byte;
   }
 
+  // update flags if requested
   if (i.get_update_condition_flags()) {
     const int64_t result =
         static_cast<int64_t>(registers[i.get_register_2()].to_signed32()) -
@@ -124,6 +133,12 @@ void Machine::execute_subtract(Instruction i, bool use_carry) {
     current_program_status_register |=
         (((result >= std::pow(2, 31)) || (result < -std::pow(2, 31)))
          << SHIFT_CPRS_V);
+  }
+
+  // write result to register (it's not written for compare operation)
+  const uint32_t register_to_write = i.get_register_1();
+  if (register_to_write < REGISTER_COUNT) {
+    registers[register_to_write] = result_byte;
   }
 }
 

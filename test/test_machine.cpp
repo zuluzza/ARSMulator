@@ -299,3 +299,30 @@ TEST_CASE_METHOD(MachineTestFixture, "Machine, execute exclusive or (EOR)") {
   CHECK(0b111011 == m.get_register_value(0).to_unsigned32());
   CHECK(0x00000000 == m.get_current_program_status_register());
 }
+
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute CMP and update zero condition flag") {
+  m.set_register_value(0, Machine_byte(10));
+  m.set_register_value(1, Machine_byte(10));
+  Instruction i(opcodes::CMP, condition_codes::NONE, false, update_modes::NONE,
+                shift_ops::NONE, 0, 1, 10);
+
+  m.execute(i);
+
+  CHECK(10 == m.get_register_value(0).to_signed32());
+  CHECK((BITMASK_CPSR_Z | BITMASK_CPSR_C) ==
+        m.get_current_program_status_register());
+}
+
+TEST_CASE_METHOD(MachineTestFixture,
+                 "Machine, execute CMN and update negative condition flag") {
+  m.set_register_value(0, Machine_byte(10));
+  m.set_register_value(1, Machine_byte(10));
+  Instruction i(opcodes::CMN, condition_codes::NONE, false, update_modes::NONE,
+                shift_ops::NONE, 0, 1, -20);
+
+  m.execute(i);
+
+  CHECK(10 == m.get_register_value(0).to_signed32());
+  CHECK(BITMASK_CPSR_N == m.get_current_program_status_register());
+}

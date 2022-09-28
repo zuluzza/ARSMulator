@@ -71,8 +71,10 @@ public:
   condition_codes get_condition_code();
   uint32_t get_register_1();
   uint32_t get_register_2();
+  void set_register_1(uint8_t new_value);
   int32_t get_second_operand();
   bool get_update_condition_flags();
+  void set_update_condition_flags(bool new_status);
 
 private:
   opcodes opcode;
