@@ -29,6 +29,8 @@ public:
   void set_current_program_status_register(uint32_t register_value);
   void print_registers();
   bool meets_condition_code(condition_codes code);
+  void set_memory(int address, Machine_byte byte);
+  Machine_byte get_memory(int address);
 
 private:
   void execute_add(Instruction i, bool use_carry = false);
@@ -36,9 +38,12 @@ private:
   void execute_and(Instruction i);
   void execute_eor(Instruction i);
   void execute_orr(Instruction i);
+  void execute_load(Instruction i);
+  void execute_store(Instruction i);
 
   std::vector<Machine_byte> registers;
   uint32_t current_program_status_register;
-  char *memory;
+  Machine_byte *memory;
+  int memory_size;
 };
 #endif // MACHINE_H

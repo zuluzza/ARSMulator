@@ -53,36 +53,34 @@ enum class condition_codes {
 
 enum class update_modes { NONE = 0, FA, EA, FD, ED };
 
-enum class shift_ops { NONE = 0, LSL, LSR, ASR, ROR, RRX };
+enum class suffixes { NONE = 0, S, B, SH, H, SB, D };
 
 class Instruction {
 public:
-  Instruction(opcodes operation, condition_codes condition,
-              bool update_condition_code_flags, update_modes update,
-              shift_ops shift, uint32_t reg1, uint32_t reg2,
+  Instruction(opcodes operation, condition_codes condition, suffixes suf,
+              update_modes update, uint32_t reg1, uint32_t reg2,
               int64_t second_operand);
   Instruction(const Instruction &i) = default;
 
-  bool has_condition_code();
-  bool has_updade_mode();
-  bool has_shift_op();
+  bool has_condition_code() const;
+  bool has_updade_mode() const;
 
-  opcodes get_opcode();
-  condition_codes get_condition_code();
-  uint32_t get_register_1();
-  uint32_t get_register_2();
+  opcodes get_opcode() const;
+  condition_codes get_condition_code() const;
+  uint32_t get_register_1() const;
+  uint32_t get_register_2() const;
   void set_register_1(uint8_t new_value);
-  int32_t get_second_operand();
+  int32_t get_second_operand() const;
   void set_second_operand(int64_t new_value);
-  bool get_update_condition_flags();
-  void set_update_condition_flags(bool new_status);
+  bool get_update_condition_flags() const;
+  void set_suffix(suffixes suf);
+  suffixes get_suffix() const;
 
 private:
   opcodes opcode;
   condition_codes condition_code;
-  bool update_flags;
+  suffixes suffix;
   update_modes update_mode;
-  shift_ops shift_op;
   uint32_t register_1;
   uint32_t register_2;
   int64_t flex_2nd_operand;

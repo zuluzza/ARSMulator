@@ -9,10 +9,13 @@
 #define REGISTER_COUNT 16
 
 Machine::Machine(int mem_size) {
-  memory = static_cast<char *>(malloc(mem_size * sizeof(char)));
+  memory = static_cast<Machine_byte *>(malloc(mem_size * sizeof(Machine_byte)));
   // Fail if it was not able to reserve memory
   assert(memory);
-
+  memory_size = mem_size;
+  for (int i = 0; i < memory_size; ++i) {
+    memory[i] = Machine_byte(0);
+  }
   registers = std::vector<Machine_byte>(REGISTER_COUNT, 0);
   current_program_status_register = 0;
 }
@@ -24,12 +27,18 @@ Machine::~Machine() {
 }
 
 void Machine::execute(Instruction i) {
+  // only executed if the condition code flags in the CPSR meet the specified
+  // condition
+  if (!meets_condition_code(i.get_condition_code())) {
+    return;
+  }
+
   switch (i.get_opcode()) {
   case opcodes::ADC:
     execute_add(i, true);
     break;
   case opcodes::CMN: // Same as ADD except result is discarded
-    i.set_update_condition_flags(true);
+    i.set_suffix(suffixes::S);
     i.set_register_1(REGISTER_COUNT); // discards result
   case opcodes::ADD:                  // intentional fall-through
     execute_add(i, false);
@@ -39,13 +48,13 @@ void Machine::execute(Instruction i) {
     execute_and(i);
     break;
   case opcodes::TST: // Performs bitwise but discards result
-    i.set_update_condition_flags(true);
+    i.set_suffix(suffixes::S);
     i.set_register_1(REGISTER_COUNT);
   case opcodes::AND: // intentional fall-through
     execute_and(i);
     break;
   case opcodes::TEQ: // Performs exclusive or but discards result
-    i.set_update_condition_flags(true);
+    i.set_suffix(suffixes::S);
     i.set_register_1(REGISTER_COUNT);
   case opcodes::EOR:
     execute_eor(i);
@@ -54,7 +63,7 @@ void Machine::execute(Instruction i) {
     execute_orr(i);
     break;
   case opcodes::CMP: // Same as SUB except result is discarded
-    i.set_update_condition_flags(true);
+    i.set_suffix(suffixes::S);
     i.set_register_1(REGISTER_COUNT); // discards result
   case opcodes::RSB:                  // intentional fall-through
   case opcodes::RSC:                  // intentional fall-through
@@ -62,6 +71,12 @@ void Machine::execute(Instruction i) {
   case opcodes::SUB:                  // intentional fall-through
     execute_subtract(i, ((i.get_opcode() == opcodes::SBC) ||
                          (i.get_opcode() == opcodes::RSC)));
+    break;
+  case opcodes::LDR:
+    execute_load(i);
+    break;
+  case opcodes::STR:
+    execute_store(i);
     break;
   case opcodes::NONE:
     // TODO add a log?
@@ -71,12 +86,6 @@ void Machine::execute(Instruction i) {
 }
 
 void Machine::execute_add(Instruction i, bool use_carry) {
-  // only executed if the condition code flags in the CPSR meet the specified
-  // condition
-  if (!meets_condition_code(i.get_condition_code())) {
-    return;
-  }
-
   // calculate result of add operation
   Machine_byte operand_byte(i.get_second_operand());
   registers[i.get_register_2()].set_carry(use_carry);
@@ -109,12 +118,6 @@ void Machine::execute_add(Instruction i, bool use_carry) {
 }
 
 void Machine::execute_subtract(Instruction i, bool use_carry) {
-  // only executed if the condition code flags in the CPSR meet the specified
-  // condition
-  if (!meets_condition_code(i.get_condition_code())) {
-    return;
-  }
-
   // calculate result of subtract operation
   Machine_byte operand_byte(i.get_second_operand());
   const Machine_byte carry_byte(use_carry ? 1 : 0);
@@ -153,12 +156,6 @@ void Machine::execute_subtract(Instruction i, bool use_carry) {
 }
 
 void Machine::execute_and(Instruction i) {
-  // only executed if the condition code flags in the CPSR meet the specified
-  // condition
-  if (!meets_condition_code(i.get_condition_code())) {
-    return;
-  }
-
   // Execute bitwise and
   Machine_byte result_byte =
       registers[i.get_register_2()] & Machine_byte(i.get_second_operand());
@@ -179,11 +176,6 @@ void Machine::execute_and(Instruction i) {
 }
 
 void Machine::execute_orr(Instruction i) {
-  // only executed if the condition code flags in the CPSR meet the specified
-  // condition
-  if (!meets_condition_code(i.get_condition_code())) {
-    return;
-  }
   const uint32_t register_to_write = i.get_register_1();
   assert(register_to_write < REGISTER_COUNT);
 
@@ -200,12 +192,6 @@ void Machine::execute_orr(Instruction i) {
 }
 
 void Machine::execute_eor(Instruction i) {
-  // only executed if the condition code flags in the CPSR meet the specified
-  // condition
-  if (!meets_condition_code(i.get_condition_code())) {
-    return;
-  }
-
   // Execute exclusive or
   Machine_byte result_byte =
       registers[i.get_register_2()] ^ Machine_byte(i.get_second_operand());
@@ -222,6 +208,64 @@ void Machine::execute_eor(Instruction i) {
   const uint32_t register_to_write = i.get_register_1();
   if (register_to_write < REGISTER_COUNT) {
     registers[register_to_write] = result_byte;
+  }
+}
+
+void Machine::execute_load(Instruction i) {
+  assert(i.get_register_2() < memory_size);
+  assert(i.get_register_1() < REGISTER_COUNT);
+
+  switch (i.get_suffix()) {
+  case suffixes::H:
+  case suffixes::SH:
+    registers[i.get_register_1()] =
+        memory[registers[i.get_register_2()].to_unsigned32()] & 0xFFFF;
+    break;
+  case suffixes::B:
+  case suffixes::SB: // intentional fall-through
+    registers[i.get_register_1()] =
+        memory[registers[i.get_register_2()].to_unsigned32()] & 0xFF;
+    break;
+  case suffixes::D:
+    assert(i.get_register_2() + 1 < memory_size);
+    assert(i.get_register_1() + 1 < REGISTER_COUNT);
+    assert(i.get_register_1() % 2 == 0);
+    assert(i.get_register_1() + 1 != i.get_register_2());
+    registers[i.get_register_1() + 1] =
+        memory[registers[i.get_register_2()].to_unsigned32() + 1];
+  case suffixes::NONE: // intentional fall-through
+  default:
+    registers[i.get_register_1()] =
+        memory[registers[i.get_register_2()].to_unsigned32()];
+  }
+}
+
+void Machine::execute_store(Instruction i) {
+  assert(i.get_register_2() < memory_size);
+  assert(i.get_register_1() < REGISTER_COUNT);
+
+  switch (i.get_suffix()) {
+  case suffixes::H:
+  case suffixes::SH:
+    memory[registers[i.get_register_2()].to_unsigned32()] =
+        registers[i.get_register_1()] & 0xFFFF;
+    break;
+  case suffixes::B:
+  case suffixes::SB: // intentional fall-through
+    memory[registers[i.get_register_2()].to_unsigned32()] =
+        registers[i.get_register_1()] & 0xFF;
+    break;
+  case suffixes::D:
+    assert(i.get_register_2() + 1 < memory_size);
+    assert(i.get_register_1() + 1 < REGISTER_COUNT);
+    assert(i.get_register_1() % 2 == 0);
+    assert(i.get_register_1() + 1 != i.get_register_2());
+    memory[registers[i.get_register_2()].to_unsigned32() + 1] =
+        registers[i.get_register_1() + 1];
+  case suffixes::NONE: // intentional fall-through
+  default:
+    memory[registers[i.get_register_2()].to_unsigned32()] =
+        registers[i.get_register_1()];
   }
 }
 
@@ -302,4 +346,14 @@ bool Machine::meets_condition_code(condition_codes code) {
 
 void Machine::set_current_program_status_register(uint32_t register_value) {
   current_program_status_register = register_value;
+}
+
+void Machine::set_memory(int address, Machine_byte byte) {
+  assert(address < memory_size);
+  memory[address] = byte;
+}
+
+Machine_byte Machine::get_memory(int address) {
+  assert(address < memory_size);
+  return memory[address];
 }
