@@ -58,7 +58,7 @@ enum class suffixes { NONE = 0, S, B, SH, H, SB, D };
 class Instruction {
 public:
   Instruction(opcodes operation, condition_codes condition, suffixes suf,
-              update_modes update, uint32_t reg1, uint32_t reg2,
+              update_modes update, std::vector<uint8_t> regs,
               int64_t second_operand);
   Instruction(const Instruction &i) = default;
 
@@ -67,9 +67,8 @@ public:
 
   opcodes get_opcode() const;
   condition_codes get_condition_code() const;
-  uint32_t get_register_1() const;
-  uint32_t get_register_2() const;
-  void set_register_1(uint8_t new_value);
+  uint32_t get_register(uint8_t index) const;
+  void set_register(uint8_t index, uint8_t new_value);
   int32_t get_second_operand() const;
   void set_second_operand(int64_t new_value);
   bool get_update_condition_flags() const;
@@ -81,8 +80,7 @@ private:
   condition_codes condition_code;
   suffixes suffix;
   update_modes update_mode;
-  uint32_t register_1;
-  uint32_t register_2;
+  std::vector<uint8_t> registers;
   int64_t flex_2nd_operand;
 };
 

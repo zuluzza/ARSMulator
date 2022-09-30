@@ -41,8 +41,8 @@ void Machine::execute(Instruction i) {
     break;
   case opcodes::CMN: // Same as ADD except result is discarded
     i.set_suffix(suffixes::S);
-    i.set_register_1(REGISTER_COUNT); // discards result
-  case opcodes::ADD:                  // intentional fall-through
+    i.set_register(0, REGISTER_COUNT); // discards result
+  case opcodes::ADD:                   // intentional fall-through
     execute_add(i, false);
     break;
   case opcodes::BIC:
@@ -51,13 +51,13 @@ void Machine::execute(Instruction i) {
     break;
   case opcodes::TST: // Performs bitwise but discards result
     i.set_suffix(suffixes::S);
-    i.set_register_1(REGISTER_COUNT);
+    i.set_register(0, REGISTER_COUNT);
   case opcodes::AND: // intentional fall-through
     execute_and(i);
     break;
   case opcodes::TEQ: // Performs exclusive or but discards result
     i.set_suffix(suffixes::S);
-    i.set_register_1(REGISTER_COUNT);
+    i.set_register(0, REGISTER_COUNT);
   case opcodes::EOR:
     execute_eor(i);
     break;
@@ -66,11 +66,11 @@ void Machine::execute(Instruction i) {
     break;
   case opcodes::CMP: // Same as SUB except result is discarded
     i.set_suffix(suffixes::S);
-    i.set_register_1(REGISTER_COUNT); // discards result
-  case opcodes::RSB:                  // intentional fall-through
-  case opcodes::RSC:                  // intentional fall-through
-  case opcodes::SBC:                  // intentional fall-through
-  case opcodes::SUB:                  // intentional fall-through
+    i.set_register(0, REGISTER_COUNT); // discards result
+  case opcodes::RSB:                   // intentional fall-through
+  case opcodes::RSC:                   // intentional fall-through
+  case opcodes::SBC:                   // intentional fall-through
+  case opcodes::SUB:                   // intentional fall-through
     execute_subtract(i, ((i.get_opcode() == opcodes::SBC) ||
                          (i.get_opcode() == opcodes::RSC)));
     break;
@@ -103,13 +103,13 @@ void Machine::execute(Instruction i) {
 void Machine::execute_add(Instruction i, bool use_carry) {
   // calculate result of add operation
   Machine_byte operand_byte(i.get_second_operand());
-  registers[i.get_register_2()].set_carry(use_carry);
-  Machine_byte result_byte = registers[i.get_register_2()] + operand_byte;
+  registers[i.get_register(1)].set_carry(use_carry);
+  Machine_byte result_byte = registers[i.get_register(1)] + operand_byte;
 
   // update flags if requested
   if (i.get_update_condition_flags()) {
     const int64_t result =
-        static_cast<int64_t>(registers[i.get_register_2()].to_signed32()) +
+        static_cast<int64_t>(registers[i.get_register(1)].to_signed32()) +
         static_cast<int64_t>(i.get_second_operand());
     current_program_status_register |= ((result < 0) << SHIFT_CPRS_N);
     current_program_status_register |= ((result == 0) << SHIFT_CPRS_Z);
@@ -117,7 +117,7 @@ void Machine::execute_add(Instruction i, bool use_carry) {
     // For an addition C is set to 1 if the addition produced a carry (that is,
     // an unsigned overflow), and to 0 otherwise.
     current_program_status_register |=
-        ((registers[i.get_register_2()].get_carry()) << SHIFT_CPRS_C);
+        ((registers[i.get_register(1)].get_carry()) << SHIFT_CPRS_C);
     // Overflow occurs if the result of an add, subtract, or compare is greater
     // than or equal to 2^31, or less than -2^31
     current_program_status_register |=
@@ -126,7 +126,7 @@ void Machine::execute_add(Instruction i, bool use_carry) {
   }
 
   // write result to register (it's not written for compare operation)
-  const uint32_t register_to_write = i.get_register_1();
+  const uint32_t register_to_write = i.get_register(0);
   if (register_to_write < REGISTER_COUNT) {
     registers[register_to_write] = result_byte;
   }
@@ -138,24 +138,24 @@ void Machine::execute_subtract(Instruction i, bool use_carry) {
   const Machine_byte carry_byte(use_carry ? 1 : 0);
   Machine_byte result_byte(std::bitset<BIT_COUNT>(0));
   if (opcodes::RSB == i.get_opcode() || opcodes::RSC == i.get_opcode()) {
-    result_byte = operand_byte - registers[i.get_register_2()] - carry_byte;
+    result_byte = operand_byte - registers[i.get_register(1)] - carry_byte;
   } else {
-    result_byte = registers[i.get_register_2()] - operand_byte - carry_byte;
+    result_byte = registers[i.get_register(1)] - operand_byte - carry_byte;
   }
 
   // update flags if requested
   if (i.get_update_condition_flags()) {
     const int64_t result =
-        static_cast<int64_t>(registers[i.get_register_2()].to_signed32()) -
+        static_cast<int64_t>(registers[i.get_register(1)].to_signed32()) -
         static_cast<int64_t>(i.get_second_operand()) - carry_byte.to_signed32();
     current_program_status_register |= ((result < 0) << SHIFT_CPRS_N);
     current_program_status_register |=
-        ((registers[i.get_register_2()].get_bits() == operand_byte.get_bits())
+        ((registers[i.get_register(1)].get_bits() == operand_byte.get_bits())
          << SHIFT_CPRS_Z);
 
     // A carry occurs if the result of a subtraction is positive
     current_program_status_register |=
-        ((!registers[i.get_register_2()].get_borrow()) << SHIFT_CPRS_C);
+        ((!registers[i.get_register(1)].get_borrow()) << SHIFT_CPRS_C);
     // Overflow occurs if the result of an add, subtract, or compare is greater
     // than or equal to 2^31, or less than -2^31
     current_program_status_register |=
@@ -164,7 +164,7 @@ void Machine::execute_subtract(Instruction i, bool use_carry) {
   }
 
   // write result to register (it's not written for compare operation)
-  const uint32_t register_to_write = i.get_register_1();
+  const uint32_t register_to_write = i.get_register(0);
   if (register_to_write < REGISTER_COUNT) {
     registers[register_to_write] = result_byte;
   }
@@ -173,7 +173,7 @@ void Machine::execute_subtract(Instruction i, bool use_carry) {
 void Machine::execute_and(Instruction i) {
   // Execute bitwise and
   Machine_byte result_byte =
-      registers[i.get_register_2()] & Machine_byte(i.get_second_operand());
+      registers[i.get_register(1)] & Machine_byte(i.get_second_operand());
 
   // update flags if requested
   if (i.get_update_condition_flags()) {
@@ -184,18 +184,18 @@ void Machine::execute_and(Instruction i) {
   }
 
   // write result to register (it's not written for compare operation)
-  const uint32_t register_to_write = i.get_register_1();
+  const uint32_t register_to_write = i.get_register(0);
   if (register_to_write < REGISTER_COUNT) {
     registers[register_to_write] = result_byte;
   }
 }
 
 void Machine::execute_orr(Instruction i) {
-  const uint32_t register_to_write = i.get_register_1();
+  const uint32_t register_to_write = i.get_register(0);
   assert(register_to_write < REGISTER_COUNT);
 
   registers[register_to_write] =
-      registers[i.get_register_2()] | Machine_byte(i.get_second_operand());
+      registers[i.get_register(1)] | Machine_byte(i.get_second_operand());
 
   // update flags if requested
   if (i.get_update_condition_flags()) {
@@ -209,7 +209,7 @@ void Machine::execute_orr(Instruction i) {
 void Machine::execute_eor(Instruction i) {
   // Execute exclusive or
   Machine_byte result_byte =
-      registers[i.get_register_2()] ^ Machine_byte(i.get_second_operand());
+      registers[i.get_register(1)] ^ Machine_byte(i.get_second_operand());
 
   // update flags if requested
   if (i.get_update_condition_flags()) {
@@ -220,80 +220,80 @@ void Machine::execute_eor(Instruction i) {
   }
 
   // write result to register (it's not written for compare operation)
-  const uint32_t register_to_write = i.get_register_1();
+  const uint32_t register_to_write = i.get_register(0);
   if (register_to_write < REGISTER_COUNT) {
     registers[register_to_write] = result_byte;
   }
 }
 
 void Machine::execute_load(Instruction i) {
-  assert(i.get_register_2() < memory_size);
-  assert(i.get_register_1() < REGISTER_COUNT);
+  assert(i.get_register(1) < memory_size);
+  assert(i.get_register(0) < REGISTER_COUNT);
 
   switch (i.get_suffix()) {
   case suffixes::H:
   case suffixes::SH:
-    registers[i.get_register_1()] =
-        memory[registers[i.get_register_2()].to_unsigned32()] & 0xFFFF;
+    registers[i.get_register(0)] =
+        memory[registers[i.get_register(1)].to_unsigned32()] & 0xFFFF;
     break;
   case suffixes::B:
   case suffixes::SB: // intentional fall-through
-    registers[i.get_register_1()] =
-        memory[registers[i.get_register_2()].to_unsigned32()] & 0xFF;
+    registers[i.get_register(0)] =
+        memory[registers[i.get_register(1)].to_unsigned32()] & 0xFF;
     break;
   case suffixes::D:
-    assert(i.get_register_2() + 1 < memory_size);
-    assert(i.get_register_1() + 1 < REGISTER_COUNT);
-    assert(i.get_register_1() % 2 == 0);
-    assert(i.get_register_1() + 1 != i.get_register_2());
-    registers[i.get_register_1() + 1] =
-        memory[registers[i.get_register_2()].to_unsigned32() + 1];
+    assert(i.get_register(1) + 1 < memory_size);
+    assert(i.get_register(0) + 1 < REGISTER_COUNT);
+    assert(i.get_register(0) % 2 == 0);
+    assert(i.get_register(0) + 1 != i.get_register(1));
+    registers[i.get_register(0) + 1] =
+        memory[registers[i.get_register(1)].to_unsigned32() + 1];
   case suffixes::NONE: // intentional fall-through
   default:
-    registers[i.get_register_1()] =
-        memory[registers[i.get_register_2()].to_unsigned32()];
+    registers[i.get_register(0)] =
+        memory[registers[i.get_register(1)].to_unsigned32()];
   }
 }
 
 void Machine::execute_store(Instruction i) {
-  assert(i.get_register_2() < memory_size);
-  assert(i.get_register_1() < REGISTER_COUNT);
+  assert(i.get_register(1) < memory_size);
+  assert(i.get_register(0) < REGISTER_COUNT);
 
   switch (i.get_suffix()) {
   case suffixes::H:
   case suffixes::SH:
-    memory[registers[i.get_register_2()].to_unsigned32()] =
-        registers[i.get_register_1()] & 0xFFFF;
+    memory[registers[i.get_register(1)].to_unsigned32()] =
+        registers[i.get_register(0)] & 0xFFFF;
     break;
   case suffixes::B:
   case suffixes::SB: // intentional fall-through
-    memory[registers[i.get_register_2()].to_unsigned32()] =
-        registers[i.get_register_1()] & 0xFF;
+    memory[registers[i.get_register(1)].to_unsigned32()] =
+        registers[i.get_register(0)] & 0xFF;
     break;
   case suffixes::D:
-    assert(i.get_register_2() + 1 < memory_size);
-    assert(i.get_register_1() + 1 < REGISTER_COUNT);
-    assert(i.get_register_1() % 2 == 0);
-    assert(i.get_register_1() + 1 != i.get_register_2());
-    memory[registers[i.get_register_2()].to_unsigned32() + 1] =
-        registers[i.get_register_1() + 1];
+    assert(i.get_register(1) + 1 < memory_size);
+    assert(i.get_register(0) + 1 < REGISTER_COUNT);
+    assert(i.get_register(0) % 2 == 0);
+    assert(i.get_register(0) + 1 != i.get_register(1));
+    memory[registers[i.get_register(1)].to_unsigned32() + 1] =
+        registers[i.get_register(0) + 1];
   case suffixes::NONE: // intentional fall-through
   default:
-    memory[registers[i.get_register_2()].to_unsigned32()] =
-        registers[i.get_register_1()];
+    memory[registers[i.get_register(1)].to_unsigned32()] =
+        registers[i.get_register(0)];
   }
 }
 
 void Machine::execute_move(Instruction i) {
-  assert(i.get_register_1() < REGISTER_COUNT);
+  assert(i.get_register(0) < REGISTER_COUNT);
 
-  registers[i.get_register_1()] = Machine_byte(i.get_second_operand());
+  registers[i.get_register(0)] = Machine_byte(i.get_second_operand());
 
   if (i.get_update_condition_flags()) {
     current_program_status_register |=
-        ((registers[i.get_register_1()].to_signed32() < 0) << SHIFT_CPRS_N);
+        ((registers[i.get_register(0)].to_signed32() < 0) << SHIFT_CPRS_N);
     current_program_status_register |=
-        ((registers[i.get_register_1()].to_unsigned32() == 0) << SHIFT_CPRS_Z);
+        ((registers[i.get_register(0)].to_unsigned32() == 0) << SHIFT_CPRS_Z);
   }
 }
 

@@ -1,14 +1,14 @@
 #include "instruction.h"
+#include <cassert>
 
 Instruction::Instruction(opcodes operation, condition_codes condition,
-                         suffixes suf, update_modes update, uint32_t reg1,
-                         uint32_t reg2, int64_t second_operand) {
+                         suffixes suf, update_modes update,
+                         std::vector<uint8_t> regs, int64_t second_operand) {
   opcode = operation;
   condition_code = condition;
   suffix = suf;
   update_mode = update;
-  register_1 = reg1;
-  register_2 = reg2;
+  registers = regs;
   flex_2nd_operand = second_operand;
 }
 
@@ -22,10 +22,15 @@ bool Instruction::has_updade_mode() const {
   return update_mode == update_modes::NONE;
 }
 
-uint32_t Instruction::get_register_1() const { return register_1; }
-uint32_t Instruction::get_register_2() const { return register_2; }
+uint32_t Instruction::get_register(uint8_t index) const {
+  assert(index < registers.size());
+  return registers[index];
+}
 
-void Instruction::set_register_1(uint8_t new_value) { register_1 = new_value; }
+void Instruction::set_register(uint8_t index, uint8_t new_value) {
+  assert(index < registers.size());
+  registers[index] = new_value;
+}
 
 int32_t Instruction::get_second_operand() const { return flex_2nd_operand; }
 

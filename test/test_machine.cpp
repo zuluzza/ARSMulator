@@ -114,7 +114,7 @@ TEST_CASE_METHOD(MachineTestFixture, "meets_condition_code->false") {
 TEST_CASE_METHOD(MachineTestFixture, "execute ADD") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, suffixes::NONE,
-                update_modes::NONE, 0, 1, 2);
+                update_modes::NONE, {0, 1}, 2);
 
   m.execute(i);
 
@@ -126,7 +126,7 @@ TEST_CASE_METHOD(MachineTestFixture,
                  "execute ADD and update zero condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, -10);
+                update_modes::NONE, {0, 1}, -10);
 
   m.execute(i);
 
@@ -139,7 +139,7 @@ TEST_CASE_METHOD(MachineTestFixture,
                  "execute ADD and update negative condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, -20);
+                update_modes::NONE, {0, 1}, -20);
 
   m.execute(i);
 
@@ -151,7 +151,7 @@ TEST_CASE_METHOD(MachineTestFixture,
                  "execute ADD and update carry condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, std::pow(2, 32) - 1);
+                update_modes::NONE, {0, 1}, std::pow(2, 32) - 1);
 
   m.execute(i);
 
@@ -165,7 +165,7 @@ TEST_CASE_METHOD(MachineTestFixture,
                  "execute ADD and update overflow condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, std::pow(2, 31) - 1);
+                update_modes::NONE, {0, 1}, std::pow(2, 31) - 1);
 
   m.execute(i);
 
@@ -178,7 +178,7 @@ TEST_CASE_METHOD(MachineTestFixture,
                  "executing ADD prevented by condition code") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::ADD, condition_codes::NE, suffixes::S,
-                update_modes::NONE, 0, 1, 2);
+                update_modes::NONE, {0, 1}, 2);
 
   m.set_current_program_status_register(BITMASK_CPSR_Z);
   m.execute(i);
@@ -190,7 +190,7 @@ TEST_CASE_METHOD(MachineTestFixture,
 TEST_CASE_METHOD(MachineTestFixture, "execute SUB") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::SUB, condition_codes::NONE, suffixes::NONE,
-                update_modes::NONE, 0, 1, 5);
+                update_modes::NONE, {0, 1}, 5);
 
   m.execute(i);
 
@@ -202,7 +202,7 @@ TEST_CASE_METHOD(MachineTestFixture,
                  "execute SUB and update zero condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::SUB, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, 10);
+                update_modes::NONE, {0, 1}, 10);
 
   m.execute(i);
 
@@ -215,7 +215,7 @@ TEST_CASE_METHOD(MachineTestFixture,
                  "execute SUB and update negative condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::SUB, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, 15);
+                update_modes::NONE, {0, 1}, 15);
 
   m.execute(i);
 
@@ -227,7 +227,7 @@ TEST_CASE_METHOD(MachineTestFixture,
                  "execute SUB and update carry condition flag") {
   m.set_register_value(1, Machine_byte(8));
   Instruction i(opcodes::SUB, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, 1);
+                update_modes::NONE, {0, 1}, 1);
 
   m.execute(i);
 
@@ -240,7 +240,7 @@ TEST_CASE_METHOD(MachineTestFixture,
   m.set_register_value(1,
                        Machine_byte(std::numeric_limits<int32_t>::min() + 1));
   Instruction i(opcodes::SUB, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1,
+                update_modes::NONE, {0, 1},
                 std::numeric_limits<int32_t>::max() - 1);
 
   m.execute(i);
@@ -256,7 +256,7 @@ TEST_CASE_METHOD(MachineTestFixture,
                  "prevent execution of SUB by condition flag") {
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::SUB, condition_codes::NE, suffixes::S,
-                update_modes::NONE, 0, 1, 5);
+                update_modes::NONE, {0, 1}, 5);
 
   m.set_current_program_status_register(BITMASK_CPSR_Z);
   m.execute(i);
@@ -268,7 +268,7 @@ TEST_CASE_METHOD(MachineTestFixture,
 TEST_CASE_METHOD(MachineTestFixture, "execute AND") {
   m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
   Instruction i(opcodes::AND, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, 0b101110);
+                update_modes::NONE, {0, 1}, 0b101110);
 
   m.set_current_program_status_register(0x00000000);
   m.execute(i);
@@ -280,7 +280,7 @@ TEST_CASE_METHOD(MachineTestFixture, "execute AND") {
 TEST_CASE_METHOD(MachineTestFixture, "execute ORR") {
   m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("000101"))));
   Instruction i(opcodes::ORR, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, 0b101110);
+                update_modes::NONE, {0, 1}, 0b101110);
 
   m.set_current_program_status_register(0x00000000);
   m.execute(i);
@@ -292,7 +292,7 @@ TEST_CASE_METHOD(MachineTestFixture, "execute ORR") {
 TEST_CASE_METHOD(MachineTestFixture, "execute exclusive or (EOR)") {
   m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
   Instruction i(opcodes::EOR, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, 0b101110);
+                update_modes::NONE, {0, 1}, 0b101110);
 
   m.set_current_program_status_register(0x00000000);
   m.execute(i);
@@ -306,7 +306,7 @@ TEST_CASE_METHOD(MachineTestFixture,
   m.set_register_value(0, Machine_byte(10));
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::CMP, condition_codes::NONE, suffixes::NONE,
-                update_modes::NONE, 0, 1, 10);
+                update_modes::NONE, {0, 1}, 10);
 
   m.execute(i);
 
@@ -320,7 +320,7 @@ TEST_CASE_METHOD(MachineTestFixture,
   m.set_register_value(0, Machine_byte(10));
   m.set_register_value(1, Machine_byte(10));
   Instruction i(opcodes::CMN, condition_codes::NONE, suffixes::NONE,
-                update_modes::NONE, 0, 1, -20);
+                update_modes::NONE, {0, 1}, -20);
 
   m.execute(i);
 
@@ -331,7 +331,7 @@ TEST_CASE_METHOD(MachineTestFixture,
 TEST_CASE_METHOD(MachineTestFixture, "execute TST") {
   m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
   Instruction i(opcodes::TST, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, 0b101010);
+                update_modes::NONE, {0, 1}, 0b101010);
 
   m.set_current_program_status_register(0x00000000);
   m.execute(i);
@@ -343,7 +343,7 @@ TEST_CASE_METHOD(MachineTestFixture, "execute TST") {
 TEST_CASE_METHOD(MachineTestFixture, "execute TEQ") {
   m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
   Instruction i(opcodes::TEQ, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, 0b101110);
+                update_modes::NONE, {0, 1}, 0b101110);
 
   m.set_current_program_status_register(0x00000000);
   m.execute(i);
@@ -355,7 +355,7 @@ TEST_CASE_METHOD(MachineTestFixture, "execute TEQ") {
 TEST_CASE_METHOD(MachineTestFixture, "execute bit clear") {
   m.set_register_value(1, Machine_byte(std::bitset<32>(std::string("010101"))));
   Instruction i(opcodes::BIC, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 1, 0b010101);
+                update_modes::NONE, {0, 1}, 0b010101);
 
   m.set_current_program_status_register(0x00000000);
   m.execute(i);
@@ -369,7 +369,7 @@ TEST_CASE_METHOD(MachineTestFixture, "Load word") {
   m.set_memory(256, Machine_byte(512));
   CHECK(512 == m.get_memory(256).to_unsigned32());
   Instruction i(opcodes::LDR, condition_codes::NONE, suffixes::NONE,
-                update_modes::NONE, 0, 1, 0);
+                update_modes::NONE, {0, 1}, 0);
   m.execute(i);
   CHECK(512 == m.get_register_value(0).to_unsigned32());
 }
@@ -379,7 +379,7 @@ TEST_CASE_METHOD(MachineTestFixture, "Load byte") {
   m.set_memory(256, Machine_byte(0b110100110));
   CHECK(0b110100110 == m.get_memory(256).to_unsigned32());
   Instruction i(opcodes::LDR, condition_codes::NONE, suffixes::B,
-                update_modes::NONE, 0, 1, 0);
+                update_modes::NONE, {0, 1}, 0);
   m.execute(i);
   CHECK(0b010100110 == m.get_register_value(0).to_unsigned32());
 }
@@ -389,7 +389,7 @@ TEST_CASE_METHOD(MachineTestFixture, "Load half-word") {
   m.set_memory(256, Machine_byte(0b11010011000100110));
   CHECK(0b11010011000100110 == m.get_memory(256).to_unsigned32());
   Instruction i(opcodes::LDR, condition_codes::NONE, suffixes::H,
-                update_modes::NONE, 0, 1, 0);
+                update_modes::NONE, {0, 1}, 0);
   m.execute(i);
   CHECK(0b01010011000100110 == m.get_register_value(0).to_unsigned32());
 }
@@ -401,7 +401,7 @@ TEST_CASE_METHOD(MachineTestFixture, "Load double word") {
   CHECK(0x01234567 == m.get_memory(256).to_unsigned32());
   CHECK(0x89ABCDEF == m.get_memory(257).to_unsigned32());
   Instruction i(opcodes::LDR, condition_codes::NONE, suffixes::D,
-                update_modes::NONE, 0, 2, 0);
+                update_modes::NONE, {0, 2}, 0);
   m.execute(i);
   CHECK(0x01234567 == m.get_register_value(0).to_unsigned32());
   CHECK(0x89ABCDEF == m.get_register_value(1).to_unsigned32());
@@ -411,7 +411,7 @@ TEST_CASE_METHOD(MachineTestFixture, "Store word") {
   m.set_register_value(1, Machine_byte(256));
   m.set_register_value(0, Machine_byte(0x01234567));
   Instruction i(opcodes::STR, condition_codes::NONE, suffixes::NONE,
-                update_modes::NONE, 0, 1, 0);
+                update_modes::NONE, {0, 1}, 0);
   m.execute(i);
   CHECK(0x01234567 == m.get_memory(256).to_unsigned32());
 }
@@ -420,7 +420,7 @@ TEST_CASE_METHOD(MachineTestFixture, "Store half-word") {
   m.set_register_value(1, Machine_byte(256));
   m.set_register_value(0, Machine_byte(0x01234567));
   Instruction i(opcodes::STR, condition_codes::NONE, suffixes::H,
-                update_modes::NONE, 0, 1, 0);
+                update_modes::NONE, {0, 1}, 0);
   m.execute(i);
   CHECK((0x01234567 & 0xFFFF) == m.get_memory(256).to_unsigned32());
 }
@@ -429,7 +429,7 @@ TEST_CASE_METHOD(MachineTestFixture, "Store byte") {
   m.set_register_value(1, Machine_byte(256));
   m.set_register_value(0, Machine_byte(0x01234567));
   Instruction i(opcodes::STR, condition_codes::NONE, suffixes::B,
-                update_modes::NONE, 0, 1, 0);
+                update_modes::NONE, {0, 1}, 0);
   m.execute(i);
   CHECK((0x01234567 & 0xFF) == m.get_memory(256).to_unsigned32());
 }
@@ -439,7 +439,7 @@ TEST_CASE_METHOD(MachineTestFixture, "Store double word") {
   m.set_register_value(0, Machine_byte(0x01234567));
   m.set_register_value(1, Machine_byte(0x89ABCDEF));
   Instruction i(opcodes::STR, condition_codes::NONE, suffixes::D,
-                update_modes::NONE, 0, 2, 0);
+                update_modes::NONE, {0, 2}, 0);
   m.execute(i);
   CHECK(0x01234567 == m.get_memory(256).to_unsigned32());
   CHECK(0x89ABCDEF == m.get_memory(257).to_unsigned32());
@@ -447,28 +447,28 @@ TEST_CASE_METHOD(MachineTestFixture, "Store double word") {
 
 TEST_CASE_METHOD(MachineTestFixture, "move") {
   Instruction i(opcodes::MOV, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 0, 123);
+                update_modes::NONE, {0, 0}, 123);
   m.execute(i);
   CHECK(123 == m.get_register_value(0).to_unsigned32());
 }
 
 TEST_CASE_METHOD(MachineTestFixture, "move not") {
   Instruction i(opcodes::MVN, condition_codes::NONE, suffixes::S,
-                update_modes::NONE, 0, 2, 123);
+                update_modes::NONE, {0, 2}, 123);
   m.execute(i);
   CHECK((~123) == m.get_register_value(0).to_unsigned32());
 }
 
 TEST_CASE_METHOD(MachineTestFixture, "branch") {
   Instruction i(opcodes::B, condition_codes::NONE, suffixes::NONE,
-                update_modes::NONE, 0, 0, 5);
+                update_modes::NONE, {0}, 5);
   m.execute(i);
   CHECK(5 == m.get_register_value(15).to_unsigned32());
 }
 
 TEST_CASE_METHOD(MachineTestFixture, "branch with link") {
   Instruction i(opcodes::BL, condition_codes::NONE, suffixes::NONE,
-                update_modes::NONE, 0, 0, 5);
+                update_modes::NONE, {0}, 5);
   m.set_register_value(15, 10);
   m.execute(i);
   CHECK(5 == m.get_register_value(15).to_unsigned32());
