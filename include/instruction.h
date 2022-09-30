@@ -51,7 +51,7 @@ enum class condition_codes {
   LE
 };
 
-enum class update_modes { NONE = 0, FA, EA, FD, ED };
+enum class update_modes { NONE = 0, IA, IB, DA, DB };
 
 enum class suffixes { NONE = 0, S, B, SH, H, SB, D };
 
@@ -63,8 +63,6 @@ public:
   Instruction(const Instruction &i) = default;
 
   bool has_condition_code() const;
-  bool has_updade_mode() const;
-
   opcodes get_opcode() const;
   condition_codes get_condition_code() const;
   uint32_t get_register(uint8_t index) const;
@@ -74,6 +72,8 @@ public:
   bool get_update_condition_flags() const;
   void set_suffix(suffixes suf);
   suffixes get_suffix() const;
+  uint8_t register_count();
+  update_modes get_update_mode() const;
 
 private:
   opcodes opcode;

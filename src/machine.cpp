@@ -91,6 +91,12 @@ void Machine::execute(Instruction i) {
   case opcodes::B: // intentional fall-through
     registers[PROGRAM_COUNTER_INDEX] = i.get_second_operand();
     break;
+  case opcodes::LDM:
+    execute_load_multiple(i);
+    break;
+  case opcodes::STM:
+    execute_store_multiple(i);
+    break;
   case opcodes::NONE:
     std::cout << "Instruction with opcode NONE" << std::endl;
   default:
@@ -294,6 +300,60 @@ void Machine::execute_move(Instruction i) {
         ((registers[i.get_register(0)].to_signed32() < 0) << SHIFT_CPRS_N);
     current_program_status_register |=
         ((registers[i.get_register(0)].to_unsigned32() == 0) << SHIFT_CPRS_Z);
+  }
+}
+
+void Machine::execute_load_multiple(Instruction i) {
+  uint32_t address = registers[i.get_register(0)].to_unsigned32();
+  const update_modes mode = i.get_update_mode();
+
+  if (mode == update_modes::IB) {
+    address++;
+  } else if (mode == update_modes::DB) {
+    address--;
+  }
+  for (uint8_t idx = 1; idx < i.register_count(); ++idx) {
+    registers[i.get_register(idx)] = memory[address];
+    switch (mode) {
+    case update_modes::DA:
+    case update_modes::DB:
+      address--;
+      break;
+    case update_modes::IA:
+    case update_modes::IB:
+      address++;
+      break;
+    default:
+      std::cout << "Unknown update mode" << std::endl;
+      break;
+    }
+  }
+}
+
+void Machine::execute_store_multiple(Instruction i) {
+  uint32_t address = registers[i.get_register(0)].to_unsigned32();
+  const update_modes mode = i.get_update_mode();
+
+  if (mode == update_modes::IB) {
+    address++;
+  } else if (mode == update_modes::DB) {
+    address--;
+  }
+  for (uint8_t idx = 1; idx < i.register_count(); ++idx) {
+    memory[address] = registers[i.get_register(idx)];
+    switch (mode) {
+    case update_modes::DA:
+    case update_modes::DB:
+      address--;
+      break;
+    case update_modes::IA:
+    case update_modes::IB:
+      address++;
+      break;
+    default:
+      std::cout << "Unknown update mode" << std::endl;
+      break;
+    }
   }
 }
 

@@ -18,10 +18,6 @@ bool Instruction::has_condition_code() const {
   return condition_code == condition_codes::NONE;
 }
 
-bool Instruction::has_updade_mode() const {
-  return update_mode == update_modes::NONE;
-}
-
 uint32_t Instruction::get_register(uint8_t index) const {
   assert(index < registers.size());
   return registers[index];
@@ -49,3 +45,7 @@ suffixes Instruction::get_suffix() const { return suffix; }
 condition_codes Instruction::get_condition_code() const {
   return condition_code;
 }
+
+uint8_t Instruction::register_count() { return registers.size(); }
+
+update_modes Instruction::get_update_mode() const { return update_mode; }

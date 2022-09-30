@@ -41,6 +41,8 @@ private:
   void execute_load(Instruction i);
   void execute_store(Instruction i);
   void execute_move(Instruction i);
+  void execute_load_multiple(Instruction i);
+  void execute_store_multiple(Instruction i);
 
   std::vector<Machine_byte> registers;
   uint32_t current_program_status_register;

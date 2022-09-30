@@ -474,3 +474,29 @@ TEST_CASE_METHOD(MachineTestFixture, "branch with link") {
   CHECK(5 == m.get_register_value(15).to_unsigned32());
   CHECK(11 == m.get_register_value(14).to_unsigned32());
 }
+
+TEST_CASE_METHOD(MachineTestFixture, "Load multiple") {
+  Instruction i(opcodes::LDM, condition_codes::NONE, suffixes::NONE,
+                update_modes::IA, {0, 3, 5, 8}, 0);
+  m.set_register_value(0, 256);
+  m.set_memory(256, 1);
+  m.set_memory(257, 2);
+  m.set_memory(258, 3);
+  m.execute(i);
+  CHECK(1 == m.get_register_value(3).to_unsigned32());
+  CHECK(2 == m.get_register_value(5).to_unsigned32());
+  CHECK(3 == m.get_register_value(8).to_unsigned32());
+}
+
+TEST_CASE_METHOD(MachineTestFixture, "Store multiple") {
+  Instruction i(opcodes::LDM, condition_codes::NONE, suffixes::NONE,
+                update_modes::DA, {0, 3, 5, 8}, 0);
+  m.set_register_value(0, 258);
+  m.set_memory(256, 1);
+  m.set_memory(257, 2);
+  m.set_memory(258, 3);
+  m.execute(i);
+  CHECK(3 == m.get_register_value(3).to_unsigned32());
+  CHECK(2 == m.get_register_value(5).to_unsigned32());
+  CHECK(1 == m.get_register_value(8).to_unsigned32());
+}
