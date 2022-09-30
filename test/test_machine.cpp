@@ -444,3 +444,17 @@ TEST_CASE_METHOD(MachineTestFixture, "Store double word") {
   CHECK(0x01234567 == m.get_memory(256).to_unsigned32());
   CHECK(0x89ABCDEF == m.get_memory(257).to_unsigned32());
 }
+
+TEST_CASE_METHOD(MachineTestFixture, "move") {
+  Instruction i(opcodes::MOV, condition_codes::NONE, suffixes::S,
+                update_modes::NONE, 0, 0, 123);
+  m.execute(i);
+  CHECK(123 == m.get_register_value(0).to_unsigned32());
+}
+
+TEST_CASE_METHOD(MachineTestFixture, "move not") {
+  Instruction i(opcodes::MVN, condition_codes::NONE, suffixes::S,
+                update_modes::NONE, 0, 2, 123);
+  m.execute(i);
+  CHECK((~123) == m.get_register_value(0).to_unsigned32());
+}

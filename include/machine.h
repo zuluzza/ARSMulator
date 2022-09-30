@@ -40,6 +40,7 @@ private:
   void execute_orr(Instruction i);
   void execute_load(Instruction i);
   void execute_store(Instruction i);
+  void execute_move(Instruction i);
 
   std::vector<Machine_byte> registers;
   uint32_t current_program_status_register;

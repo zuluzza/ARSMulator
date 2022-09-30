@@ -78,8 +78,14 @@ void Machine::execute(Instruction i) {
   case opcodes::STR:
     execute_store(i);
     break;
+  case opcodes::MVN:
+    i.set_second_operand(~i.get_second_operand());
+  case opcodes::MOV: // intentional fall-through
+    execute_move(i);
+    break;
   case opcodes::NONE:
-    // TODO add a log?
+    std::cout << "Unknown opcode " << static_cast<uint8_t>(i.get_opcode())
+              << std::endl;
   default:
     assert(false);
   }
@@ -266,6 +272,19 @@ void Machine::execute_store(Instruction i) {
   default:
     memory[registers[i.get_register_2()].to_unsigned32()] =
         registers[i.get_register_1()];
+  }
+}
+
+void Machine::execute_move(Instruction i) {
+  assert(i.get_register_1() < REGISTER_COUNT);
+
+  registers[i.get_register_1()] = Machine_byte(i.get_second_operand());
+
+  if (i.get_update_condition_flags()) {
+    current_program_status_register |=
+        ((registers[i.get_register_1()].to_signed32() < 0) << SHIFT_CPRS_N);
+    current_program_status_register |=
+        ((registers[i.get_register_1()].to_unsigned32() == 0) << SHIFT_CPRS_Z);
   }
 }
 
