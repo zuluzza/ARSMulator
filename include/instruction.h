@@ -2,6 +2,7 @@
 #define INSTRUCTION_H
 
 #include <string>
+#include <vector>
 
 // Opcodes for all architectures from
 // https://developer.arm.com/documentation/dui0068/b/ARM-Instruction-Reference?lang=en
