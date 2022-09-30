@@ -458,3 +458,19 @@ TEST_CASE_METHOD(MachineTestFixture, "move not") {
   m.execute(i);
   CHECK((~123) == m.get_register_value(0).to_unsigned32());
 }
+
+TEST_CASE_METHOD(MachineTestFixture, "branch") {
+  Instruction i(opcodes::B, condition_codes::NONE, suffixes::NONE,
+                update_modes::NONE, 0, 0, 5);
+  m.execute(i);
+  CHECK(5 == m.get_register_value(15).to_unsigned32());
+}
+
+TEST_CASE_METHOD(MachineTestFixture, "branch with link") {
+  Instruction i(opcodes::BL, condition_codes::NONE, suffixes::NONE,
+                update_modes::NONE, 0, 0, 5);
+  m.set_register_value(15, 10);
+  m.execute(i);
+  CHECK(5 == m.get_register_value(15).to_unsigned32());
+  CHECK(11 == m.get_register_value(14).to_unsigned32());
+}

@@ -7,6 +7,8 @@
 #include <limits>
 
 #define REGISTER_COUNT 16
+#define PROGRAM_COUNTER_INDEX 15
+#define LINK_REGISTER_INDEX 14
 
 Machine::Machine(int mem_size) {
   memory = static_cast<Machine_byte *>(malloc(mem_size * sizeof(Machine_byte)));
@@ -83,10 +85,17 @@ void Machine::execute(Instruction i) {
   case opcodes::MOV: // intentional fall-through
     execute_move(i);
     break;
+  case opcodes::BL:
+    registers[LINK_REGISTER_INDEX] =
+        Machine_byte(registers[PROGRAM_COUNTER_INDEX].to_unsigned32() + 1);
+  case opcodes::B: // intentional fall-through
+    registers[PROGRAM_COUNTER_INDEX] = i.get_second_operand();
+    break;
   case opcodes::NONE:
+    std::cout << "Instruction with opcode NONE" << std::endl;
+  default:
     std::cout << "Unknown opcode " << static_cast<uint8_t>(i.get_opcode())
               << std::endl;
-  default:
     assert(false);
   }
 }
