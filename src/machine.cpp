@@ -7,8 +7,6 @@
 #include <limits>
 
 #define REGISTER_COUNT 16
-#define PROGRAM_COUNTER_INDEX 15
-#define LINK_REGISTER_INDEX 14
 
 Machine::Machine(int mem_size) {
   memory = static_cast<Machine_byte *>(malloc(mem_size * sizeof(Machine_byte)));
@@ -28,82 +26,92 @@ Machine::~Machine() {
   }
 }
 
-void Machine::execute(Instruction i) {
+bool Machine::execute(Instruction i) {
+  bool halt = false;
+
   // only executed if the condition code flags in the CPSR meet the specified
   // condition
-  if (!meets_condition_code(i.get_condition_code())) {
-    return;
+  if (meets_condition_code(i.get_condition_code())) {
+    switch (i.get_opcode()) {
+    case opcodes::ADC:
+      execute_add(i, true);
+      break;
+    case opcodes::CMN: // Same as ADD except result is discarded
+      i.set_suffix(suffixes::S);
+      i.set_register(0, REGISTER_COUNT); // discards result
+    case opcodes::ADD:                   // intentional fall-through
+      execute_add(i, false);
+      break;
+    case opcodes::BIC:
+      i.set_second_operand(~i.get_second_operand());
+      execute_and(i);
+      break;
+    case opcodes::TST: // Performs bitwise but discards result
+      i.set_suffix(suffixes::S);
+      i.set_register(0, REGISTER_COUNT);
+    case opcodes::AND: // intentional fall-through
+      execute_and(i);
+      break;
+    case opcodes::TEQ: // Performs exclusive or but discards result
+      i.set_suffix(suffixes::S);
+      i.set_register(0, REGISTER_COUNT);
+    case opcodes::EOR:
+      execute_eor(i);
+      break;
+    case opcodes::ORR:
+      execute_orr(i);
+      break;
+    case opcodes::CMP: // Same as SUB except result is discarded
+      i.set_suffix(suffixes::S);
+      i.set_register(0, REGISTER_COUNT); // discards result
+    case opcodes::RSB:                   // intentional fall-through
+    case opcodes::RSC:                   // intentional fall-through
+    case opcodes::SBC:                   // intentional fall-through
+    case opcodes::SUB:                   // intentional fall-through
+      execute_subtract(i, ((i.get_opcode() == opcodes::SBC) ||
+                           (i.get_opcode() == opcodes::RSC)));
+      break;
+    case opcodes::LDR:
+      execute_load(i);
+      break;
+    case opcodes::STR:
+      execute_store(i);
+      break;
+    case opcodes::MVN:
+      i.set_second_operand(~i.get_second_operand());
+    case opcodes::MOV: // intentional fall-through
+      execute_move(i);
+      break;
+    case opcodes::BL:
+      registers[LINK_REGISTER_INDEX] =
+          Machine_byte(registers[PROGRAM_COUNTER_INDEX].to_unsigned32() + 1);
+    case opcodes::B: // intentional fall-through
+                     // -1 because PC register is increased after executing the
+                     // instruction -> this results in PC to be
+                     // i.get_second_operand() when execution returns from this
+                     // method
+      registers[PROGRAM_COUNTER_INDEX] = i.get_second_operand() - 1;
+      break;
+    case opcodes::LDM:
+      execute_load_multiple(i);
+      break;
+    case opcodes::STM:
+      execute_store_multiple(i);
+      break;
+    case opcodes::NONE:
+      std::cout << "Instruction with opcode NONE" << std::endl;
+      halt = true;
+    default:
+      std::cout << "Unknown opcode " << static_cast<uint8_t>(i.get_opcode())
+                << std::endl;
+    case opcodes::SWI: // intentional fall-through
+      halt = true;
+    }
   }
-
-  switch (i.get_opcode()) {
-  case opcodes::ADC:
-    execute_add(i, true);
-    break;
-  case opcodes::CMN: // Same as ADD except result is discarded
-    i.set_suffix(suffixes::S);
-    i.set_register(0, REGISTER_COUNT); // discards result
-  case opcodes::ADD:                   // intentional fall-through
-    execute_add(i, false);
-    break;
-  case opcodes::BIC:
-    i.set_second_operand(~i.get_second_operand());
-    execute_and(i);
-    break;
-  case opcodes::TST: // Performs bitwise but discards result
-    i.set_suffix(suffixes::S);
-    i.set_register(0, REGISTER_COUNT);
-  case opcodes::AND: // intentional fall-through
-    execute_and(i);
-    break;
-  case opcodes::TEQ: // Performs exclusive or but discards result
-    i.set_suffix(suffixes::S);
-    i.set_register(0, REGISTER_COUNT);
-  case opcodes::EOR:
-    execute_eor(i);
-    break;
-  case opcodes::ORR:
-    execute_orr(i);
-    break;
-  case opcodes::CMP: // Same as SUB except result is discarded
-    i.set_suffix(suffixes::S);
-    i.set_register(0, REGISTER_COUNT); // discards result
-  case opcodes::RSB:                   // intentional fall-through
-  case opcodes::RSC:                   // intentional fall-through
-  case opcodes::SBC:                   // intentional fall-through
-  case opcodes::SUB:                   // intentional fall-through
-    execute_subtract(i, ((i.get_opcode() == opcodes::SBC) ||
-                         (i.get_opcode() == opcodes::RSC)));
-    break;
-  case opcodes::LDR:
-    execute_load(i);
-    break;
-  case opcodes::STR:
-    execute_store(i);
-    break;
-  case opcodes::MVN:
-    i.set_second_operand(~i.get_second_operand());
-  case opcodes::MOV: // intentional fall-through
-    execute_move(i);
-    break;
-  case opcodes::BL:
-    registers[LINK_REGISTER_INDEX] =
-        Machine_byte(registers[PROGRAM_COUNTER_INDEX].to_unsigned32() + 1);
-  case opcodes::B: // intentional fall-through
-    registers[PROGRAM_COUNTER_INDEX] = i.get_second_operand();
-    break;
-  case opcodes::LDM:
-    execute_load_multiple(i);
-    break;
-  case opcodes::STM:
-    execute_store_multiple(i);
-    break;
-  case opcodes::NONE:
-    std::cout << "Instruction with opcode NONE" << std::endl;
-  default:
-    std::cout << "Unknown opcode " << static_cast<uint8_t>(i.get_opcode())
-              << std::endl;
-    assert(false);
-  }
+  // Increment program counter to next instruction
+  set_register_value(PROGRAM_COUNTER_INDEX,
+                     get_register_value(PROGRAM_COUNTER_INDEX) + 1);
+  return halt;
 }
 
 void Machine::execute_add(Instruction i, bool use_carry) {

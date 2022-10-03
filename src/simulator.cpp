@@ -1,25 +1,24 @@
+#include "simulator.h"
 #include "instruction.h"
 #include "machine.h"
 
-#include <cassert>
-#include <fstream>
-#include <iostream>
+#include <vector>
+
+static void Simulator::run_program(std::vector<Instruction> &program,
+                                   Machine &m) {
+  bool cont = true;
+  while (cont) {
+    unsigned int instruction_address =
+        m.get_register_value(PROGRAM_COUNTER_INDEX);
+    Instruction i program[instruction_address];
+    cont = !m.execute(i);
+  }
+  std::cout << "Program halted!" << std::cout;
+}
 
 int main(int argc, char *argv[]) {
-  assert(argc == 2);
-
-  std::ifstream asm_file_in;
-  asm_file_in.open(argv[1]);
-
-  std::string instruction_line;
-  Machine machine(1024);
-
-  while (asm_file_in) {
-    getline(asm_file_in, instruction_line);
-    std::cout << instruction_line << std::endl;
-  }
-
-  asm_file_in.close();
-
+  std::vector<Instruction> program;
+  Machine m(2048);
+  run_program(program, m);
   return 0;
 }

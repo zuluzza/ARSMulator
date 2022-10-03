@@ -16,13 +16,17 @@
 #define BITMASK_CPSR_Z (0x01 << SHIFT_CPRS_Z)
 #define BITMASK_CPSR_C (0x01 << SHIFT_CPRS_C)
 #define BITMASK_CPSR_V (0x01 << SHIFT_CPRS_V)
+#define PROGRAM_COUNTER_INDEX 15
+#define LINK_REGISTER_INDEX 14
 
 class Machine {
 public:
   Machine(int mem_size);
   Machine(Machine &machine) = delete;
   ~Machine();
-  void execute(Instruction i);
+  // returns true if machine should be halted (due to SWI or an error), false
+  // otherwise
+  bool execute(Instruction i);
   void set_register_value(uint8_t reg_number, Machine_byte value);
   Machine_byte get_register_value(uint8_t reg_number);
   uint32_t get_current_program_status_register();
