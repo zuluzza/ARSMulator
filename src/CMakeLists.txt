@@ -1,7 +1,9 @@
 
 add_library(simulator
             instruction.cpp
-            machine.cpp)
+            machine.cpp
+            source_parser.cpp
+            simulator.cpp)
 
 target_include_directories(simulator PUBLIC ../include)
 

@@ -19,5 +19,7 @@ TEST_CASE("Simulator, run_program") {
                      {1, 2},
                      50});
   Machine m(1024);
-  CHECK(70 == m.get_register_value(1));
+
+  Simulator::run_program(program, m);
+  CHECK(70 == m.get_register_value(1).to_unsigned32());
 }

@@ -114,9 +114,16 @@ bool Machine::execute(Instruction i) {
   return halt;
 }
 
+Machine_byte Machine::get_flex_2nd_operand_value(Instruction i) {
+  if (i.is_2nd_operand_register()) {
+    return registers[i.get_last_register()];
+  }
+  return i.get_second_operand();
+}
+
 void Machine::execute_add(Instruction i, bool use_carry) {
   // calculate result of add operation
-  Machine_byte operand_byte(i.get_second_operand());
+  Machine_byte operand_byte(get_flex_2nd_operand_value(i));
   registers[i.get_register(1)].set_carry(use_carry);
   Machine_byte result_byte = registers[i.get_register(1)] + operand_byte;
 
@@ -124,7 +131,7 @@ void Machine::execute_add(Instruction i, bool use_carry) {
   if (i.get_update_condition_flags()) {
     const int64_t result =
         static_cast<int64_t>(registers[i.get_register(1)].to_signed32()) +
-        static_cast<int64_t>(i.get_second_operand());
+        static_cast<int64_t>(get_flex_2nd_operand_value(i).to_signed32());
     current_program_status_register |= ((result < 0) << SHIFT_CPRS_N);
     current_program_status_register |= ((result == 0) << SHIFT_CPRS_Z);
 
@@ -148,7 +155,7 @@ void Machine::execute_add(Instruction i, bool use_carry) {
 
 void Machine::execute_subtract(Instruction i, bool use_carry) {
   // calculate result of subtract operation
-  Machine_byte operand_byte(i.get_second_operand());
+  Machine_byte operand_byte(get_flex_2nd_operand_value(i));
   const Machine_byte carry_byte(use_carry ? 1 : 0);
   Machine_byte result_byte(std::bitset<BIT_COUNT>(0));
   if (opcodes::RSB == i.get_opcode() || opcodes::RSC == i.get_opcode()) {
@@ -161,7 +168,8 @@ void Machine::execute_subtract(Instruction i, bool use_carry) {
   if (i.get_update_condition_flags()) {
     const int64_t result =
         static_cast<int64_t>(registers[i.get_register(1)].to_signed32()) -
-        static_cast<int64_t>(i.get_second_operand()) - carry_byte.to_signed32();
+        static_cast<int64_t>(get_flex_2nd_operand_value(i).to_signed32()) -
+        carry_byte.to_signed32();
     current_program_status_register |= ((result < 0) << SHIFT_CPRS_N);
     current_program_status_register |=
         ((registers[i.get_register(1)].get_bits() == operand_byte.get_bits())
@@ -186,8 +194,8 @@ void Machine::execute_subtract(Instruction i, bool use_carry) {
 
 void Machine::execute_and(Instruction i) {
   // Execute bitwise and
-  Machine_byte result_byte =
-      registers[i.get_register(1)] & Machine_byte(i.get_second_operand());
+  Machine_byte result_byte = registers[i.get_register(1)] &
+                             Machine_byte(get_flex_2nd_operand_value(i));
 
   // update flags if requested
   if (i.get_update_condition_flags()) {
@@ -208,8 +216,8 @@ void Machine::execute_orr(Instruction i) {
   const uint32_t register_to_write = i.get_register(0);
   assert(register_to_write < REGISTER_COUNT);
 
-  registers[register_to_write] =
-      registers[i.get_register(1)] | Machine_byte(i.get_second_operand());
+  registers[register_to_write] = registers[i.get_register(1)] |
+                                 Machine_byte(get_flex_2nd_operand_value(i));
 
   // update flags if requested
   if (i.get_update_condition_flags()) {
@@ -222,8 +230,8 @@ void Machine::execute_orr(Instruction i) {
 
 void Machine::execute_eor(Instruction i) {
   // Execute exclusive or
-  Machine_byte result_byte =
-      registers[i.get_register(1)] ^ Machine_byte(i.get_second_operand());
+  Machine_byte result_byte = registers[i.get_register(1)] ^
+                             Machine_byte(get_flex_2nd_operand_value(i));
 
   // update flags if requested
   if (i.get_update_condition_flags()) {
@@ -301,7 +309,7 @@ void Machine::execute_store(Instruction i) {
 void Machine::execute_move(Instruction i) {
   assert(i.get_register(0) < REGISTER_COUNT);
 
-  registers[i.get_register(0)] = Machine_byte(i.get_second_operand());
+  registers[i.get_register(0)] = Machine_byte(get_flex_2nd_operand_value(i));
 
   if (i.get_update_condition_flags()) {
     current_program_status_register |=

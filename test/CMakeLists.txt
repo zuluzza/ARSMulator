@@ -3,7 +3,9 @@ project(unittests LANGUAGES CXX)
 
 add_executable(unittests 
 			   test_machine.cpp
-			   test_machine_byte.cpp)
+			   test_machine_byte.cpp
+			   test_simulator.cpp
+			   test_source_parser.cpp)
 
 target_include_directories(unittests PUBLIC ../include)
 

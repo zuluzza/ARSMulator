@@ -62,6 +62,7 @@ public:
               update_modes update, std::vector<uint8_t> regs,
               int64_t second_operand);
   Instruction(const Instruction &i) = default;
+  Instruction() = default;
 
   bool has_condition_code() const;
   opcodes get_opcode() const;
@@ -75,6 +76,14 @@ public:
   suffixes get_suffix() const;
   uint8_t register_count();
   update_modes get_update_mode() const;
+  void set_opcode(opcodes new_opcode);
+  void set_condition_code(condition_codes new_condition_code);
+  void set_update_mode(update_modes new_update_mode);
+  void set_registers(std::vector<uint8_t> new_registers);
+  void set_is_2nd_operand_register(bool is_register);
+  bool is_2nd_operand_register() const;
+  uint32_t get_last_register() const;
+  size_t get_register_count() const;
 
 private:
   opcodes opcode;
@@ -83,6 +92,7 @@ private:
   update_modes update_mode;
   std::vector<uint8_t> registers;
   int64_t flex_2nd_operand;
+  bool flex_2nd_is_register;
 };
 
 #endif // INSTRUCTION_H

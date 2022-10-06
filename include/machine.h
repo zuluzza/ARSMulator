@@ -35,6 +35,7 @@ public:
   bool meets_condition_code(condition_codes code);
   void set_memory(int address, Machine_byte byte);
   Machine_byte get_memory(int address);
+  Machine_byte get_flex_2nd_operand_value(Instruction i);
 
 private:
   void execute_add(Instruction i, bool use_carry = false);
