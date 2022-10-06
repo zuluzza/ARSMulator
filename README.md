@@ -17,6 +17,5 @@ After a succesful build, all unit tests can be run by
 >ctest --output-on-failure
 
 ### TODO
-1. add a runner that runs through the program
-2. add SWI (SW interrupt) instruction
-3. add a parser to run .s files
+1. add a parser to run .s files
+2. add CLI
