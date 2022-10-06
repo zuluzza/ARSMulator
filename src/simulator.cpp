@@ -18,10 +18,3 @@ void Simulator::run_program(std::vector<Instruction> &program, Machine &m) {
   }
   std::cout << "Program halted!" << std::endl;
 }
-
-int main(int argc, char *argv[]) {
-  std::vector<Instruction> program;
-  Machine m(2048);
-  Simulator::run_program(program, m);
-  return 0;
-}
