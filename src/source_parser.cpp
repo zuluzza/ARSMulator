@@ -118,17 +118,20 @@ bool SourceCodeParser::parse_line(std::string &line, Instruction &result) {
       line = line.substr(1, line.size() - 1);
     // intenional fall-through
     case 'r': // register
+      line = line.substr(1, line.size() - 1);
       register_list.push_back(std::stoi(line));
       break;
     case '-': // register range
     {
+      line = line.substr(2, line.size() - 2);
       uint8_t end_value = std::stoi(line);
       for (uint8_t i = register_list.back() + 1; i <= end_value; ++i) {
         register_list.push_back(i);
       }
     } break;
     case '#': // immediate
-      if (line.size() > 2 && line[2] == 'x') {
+      line = line.substr(1, line.size() - 1);
+      if (line.size() > 1 && line[1] == 'x') {
         // hexadecimal value
         result.set_second_operand(
             std::stoi(line.substr(2, line.size() - 2), nullptr, 16));
@@ -140,12 +143,13 @@ bool SourceCodeParser::parse_line(std::string &line, Instruction &result) {
       break;
     }
 
-    auto next_pos = line.find_first_of("r#-{");
-    if (next_pos == std::string::npos) {
+    auto next_pos = line.find_first_of("r#-{;");
+    if (next_pos == std::string::npos || line[next_pos] == ';') {
       break;
     }
     line = line.substr(next_pos, line.size() - next_pos);
   }
 
+  result.set_registers(register_list);
   return true;
 }

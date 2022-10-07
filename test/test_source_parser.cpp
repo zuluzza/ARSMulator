@@ -35,13 +35,6 @@ TEST_CASE_METHOD(SourceParserTestFixture, "parse symbol") {
   verify_symbol("symbol", 0);
 }
 
-TEST_CASE_METHOD(SourceParserTestFixture, "remove leading whitespace") {
-  std::string test_line("    ADD r1, r2, #30");
-  Instruction i;
-  parse_line_and_check_return_value(test_line, i, false);
-  CHECK(0 == test_line.compare("ADD r1, r2, #30"));
-}
-
 TEST_CASE_METHOD(SourceParserTestFixture, "ADD with condition code") {
   std::string test_line("    ADDEQ r1, r2, #30");
   Instruction i;
@@ -131,7 +124,7 @@ TEST_CASE_METHOD(SourceParserTestFixture, "Comment line is ignored") {
 
 TEST_CASE_METHOD(SourceParserTestFixture,
                  "Comment at the end of line is ignored") {
-  std::string test_line("    SUB, r3, r5, #200 ;this is comment");
+  std::string test_line("    SUB, r3, r5, #200 ;here is the comment");
   Instruction i;
   parse_line_and_check_return_value(test_line, i, true);
   CHECK(i.get_opcode() == opcodes::SUB);
@@ -161,4 +154,35 @@ TEST_CASE_METHOD(SourceParserTestFixture, "Parse a file") {
   CHECK(parsed_program[2].get_opcode() == opcodes::ADD);
   CHECK(parsed_program[3].get_opcode() == opcodes::SUB);
   CHECK(parsed_program[4].get_opcode() == opcodes::STR);
+}
+
+TEST_CASE_METHOD(SourceParserTestFixture,
+                 "LDM with a reglist") {
+  std::string test_line("    LDMIA r1, {r2,r5,r8}");
+  Instruction i;
+  parse_line_and_check_return_value(test_line, i, true);
+  CHECK(i.get_opcode() == opcodes::LDM);
+  CHECK(i.get_update_mode() == update_modes::IA);
+  REQUIRE(i.get_register_count() == 4);
+  CHECK(i.get_register(0) == 1);
+  CHECK(i.get_register(1) == 2);
+  CHECK(i.get_register(2) == 5);
+  CHECK(i.get_register(3) == 8);
+}
+
+TEST_CASE_METHOD(SourceParserTestFixture,
+                 "LDM with a reglist including range") {
+  std::string test_line("    LDMIA r1, {r2,r5-r8,r10}");
+  Instruction i;
+  parse_line_and_check_return_value(test_line, i, true);
+  CHECK(i.get_opcode() == opcodes::LDM);
+  CHECK(i.get_update_mode() == update_modes::IA);
+  REQUIRE(i.get_register_count() == 7);
+  CHECK(i.get_register(0) == 1);
+  CHECK(i.get_register(1) == 2);
+  CHECK(i.get_register(2) == 5);
+  CHECK(i.get_register(3) == 6);
+  CHECK(i.get_register(4) == 7);
+  CHECK(i.get_register(5) == 8);
+  CHECK(i.get_register(6) == 10);
 }
