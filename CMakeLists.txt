@@ -10,5 +10,5 @@ project(
   VERSION 0.1
   LANGUAGES CXX)
 
-add_subdirectory(src)
+add_subdirectory(src src/build)
 add_subdirectory(test test/build)

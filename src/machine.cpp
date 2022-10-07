@@ -328,7 +328,7 @@ void Machine::execute_load_multiple(Instruction i) {
   } else if (mode == update_modes::DB) {
     address--;
   }
-  for (uint8_t idx = 1; idx < i.register_count(); ++idx) {
+  for (uint8_t idx = 1; idx < i.get_register_count(); ++idx) {
     registers[i.get_register(idx)] = memory[address];
     switch (mode) {
     case update_modes::DA:
@@ -355,7 +355,7 @@ void Machine::execute_store_multiple(Instruction i) {
   } else if (mode == update_modes::DB) {
     address--;
   }
-  for (uint8_t idx = 1; idx < i.register_count(); ++idx) {
+  for (uint8_t idx = 1; idx < i.get_register_count(); ++idx) {
     memory[address] = registers[i.get_register(idx)];
     switch (mode) {
     case update_modes::DA:
@@ -385,8 +385,8 @@ Machine_byte Machine::get_register_value(uint8_t reg_number) {
 
 void Machine::print_registers() {
   for (uint8_t i = 0; i < REGISTER_COUNT; ++i) {
-    std::cout << "Register " << i << ": " << registers[i].get_bits()
-              << std::endl;
+    std::cout << "Register " << static_cast<int16_t>(i) << ": "
+              << registers[i].get_bits() << std::endl;
   }
 }
 

@@ -74,7 +74,6 @@ public:
   bool get_update_condition_flags() const;
   void set_suffix(suffixes suf);
   suffixes get_suffix() const;
-  uint8_t register_count();
   update_modes get_update_mode() const;
   void set_opcode(opcodes new_opcode);
   void set_condition_code(condition_codes new_condition_code);

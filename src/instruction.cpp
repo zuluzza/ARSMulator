@@ -60,8 +60,6 @@ condition_codes Instruction::get_condition_code() const {
   return condition_code;
 }
 
-uint8_t Instruction::register_count() { return registers.size(); }
-
 update_modes Instruction::get_update_mode() const { return update_mode; }
 
 void Instruction::set_opcode(opcodes new_opcode) { opcode = new_opcode; }
