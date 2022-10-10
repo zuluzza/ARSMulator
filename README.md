@@ -14,8 +14,8 @@ Requires CMake and a compatible c++ compiler (tested with clang).  Below command
 There's a simple command line tool that can be used to run simulations. After building it can be run by 
 >./src/build/cli_simulator.exe [-m 256] [-f c\:/git/ARSMulator/test.s]
 
-There are two command line options:
--m Sets the memory size of the simulated machine in bytes (default is 256)
+There are two command line options:\
+-m Sets the memory size of the simulated machine in bytes (default is 256)\
 -f Path to the source code file that is to be run
 
 The are following commands that can be given to the command line simulator
