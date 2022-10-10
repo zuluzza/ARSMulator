@@ -9,7 +9,8 @@
 
 class Simulator {
 public:
-  static void run_program(std::vector<Instruction> &program, Machine &m, unsigned int count = 0);
+  static void run_program(std::vector<Instruction> &program, Machine &m,
+                          unsigned int count = 0);
 };
 
 #endif // SIMULATOR_H
