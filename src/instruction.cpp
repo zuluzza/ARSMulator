@@ -77,3 +77,7 @@ void Instruction::set_registers(std::vector<uint8_t> new_registers) {
 }
 
 size_t Instruction::get_register_count() const { return registers.size(); }
+
+void Instruction::append_to_registers(uint8_t index) {
+  registers.push_back(index);
+}

@@ -1,5 +1,7 @@
 #include "source_parser.h"
 
+#include <cassert>
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -42,13 +44,24 @@ std::vector<Instruction> SourceCodeParser::parse(std::string file_name) {
   while (asm_file_in) {
     getline(asm_file_in, instruction_line);
     Instruction read_instruction;
+    std::pair<std::string, unsigned int> unsolved_label_info;
     const bool is_new_instruction =
-        parse_line(instruction_line, read_instruction);
+        parse_line(instruction_line, read_instruction, unsolved_label_info);
     if (is_new_instruction) {
       parsed_program.push_back(read_instruction);
     }
+    if (!unsolved_label_info.first.empty()) {
+      unsolved_labels.push_back(unsolved_label_info);
+    }
   }
   asm_file_in.close();
+
+  for (auto label_info : unsolved_labels) {
+    auto it = symbol_address_table.find(label_info.first);
+    assert(it != symbol_address_table.end());
+
+    parsed_program[label_info.second].append_to_registers(it->second);
+  }
 
   return parsed_program;
 }
@@ -58,8 +71,10 @@ static std::string remove_leading_spaces(std::string &line) {
   return line.substr(first_non_whitespace, line.size() - first_non_whitespace);
 }
 
-static std::vector<uint8_t> parse_registers(std::string &line,
-                                            Instruction &result) {
+std::vector<uint8_t> SourceCodeParser::parse_registers(std::string &line,
+                                                       Instruction &result,
+                                                       bool &unsolved_label) {
+  unsolved_label = false;
   std::vector<uint8_t> register_list;
   while (line.size() > 0) {
     line = remove_leading_spaces(line);
@@ -99,10 +114,25 @@ static std::vector<uint8_t> parse_registers(std::string &line,
     }
     line = line.substr(next_pos, line.size() - next_pos);
   }
+  if (!line.empty() && line[0] != ';' && !isdigit(line[0])) {
+    // it's a label
+    auto next_pos = line.find_first_of(" ;,");
+    if (next_pos != std::string::npos) {
+      line = line.substr(0, next_pos);
+    }
+    auto item = symbol_address_table.find(line);
+    if (item != symbol_address_table.end()) {
+      register_list.push_back(symbol_address_table[line]);
+    } else {
+      unsolved_label = true;
+    }
+  }
   return register_list;
 }
 
-bool SourceCodeParser::parse_line(std::string &line, Instruction &result) {
+bool SourceCodeParser::parse_line(
+    std::string &line, Instruction &result,
+    std::pair<std::string, unsigned int> &unsolved_label_info) {
   if (line[0] == '@' || line[0] == ';') {
     // it's comment line
     return false;
@@ -159,7 +189,13 @@ bool SourceCodeParser::parse_line(std::string &line, Instruction &result) {
   }
 
   // parse registers
-  std::vector<uint8_t> register_list = parse_registers(line, result);
+  bool unsolved_label;
+  std::vector<uint8_t> register_list =
+      parse_registers(line, result, unsolved_label);
+  if (unsolved_label) {
+    unsolved_label_info.first = line;
+    unsolved_label_info.second = line_number;
+  }
   result.set_registers(register_list);
 
   line_number++;

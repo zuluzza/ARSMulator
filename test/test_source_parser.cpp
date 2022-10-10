@@ -17,7 +17,8 @@ public:
 
   void parse_line_and_check_return_value(std::string &test_line, Instruction &i,
                                          bool expected) {
-    CHECK(expected == parser.parse_line(test_line, i));
+    std::pair<std::string, unsigned int> unsolved_label_info;
+    CHECK(expected == parser.parse_line(test_line, i, unsolved_label_info));
   }
 
   std::vector<Instruction> parse_file(std::string file_name) {
@@ -117,9 +118,12 @@ TEST_CASE_METHOD(SourceParserTestFixture, "SUB with immediate") {
 }
 
 TEST_CASE_METHOD(SourceParserTestFixture, "Comment line is ignored") {
-  std::string test_line(";this is a comment");
+  std::string test_line1(";this is a comment");
   Instruction i;
-  parse_line_and_check_return_value(test_line, i, false);
+  parse_line_and_check_return_value(test_line1, i, false);
+
+  std::string test_line2("@this is second comment");
+  parse_line_and_check_return_value(test_line2, i, false);
 }
 
 TEST_CASE_METHOD(SourceParserTestFixture,
@@ -156,8 +160,7 @@ TEST_CASE_METHOD(SourceParserTestFixture, "Parse a file") {
   CHECK(parsed_program[4].get_opcode() == opcodes::STR);
 }
 
-TEST_CASE_METHOD(SourceParserTestFixture,
-                 "LDM with a reglist") {
+TEST_CASE_METHOD(SourceParserTestFixture, "LDM with a reglist") {
   std::string test_line("    LDMIA r1, {r2,r5,r8}");
   Instruction i;
   parse_line_and_check_return_value(test_line, i, true);
@@ -185,4 +188,40 @@ TEST_CASE_METHOD(SourceParserTestFixture,
   CHECK(i.get_register(4) == 7);
   CHECK(i.get_register(5) == 8);
   CHECK(i.get_register(6) == 10);
+}
+
+TEST_CASE_METHOD(SourceParserTestFixture, "Label before it's used") {
+  std::ofstream asm_file;
+  std::string file_name = "test_file_label1.s";
+  asm_file.open(file_name);
+  asm_file << "    MOV r1, #123" << std::endl;
+  asm_file << "label1" << std::endl;
+  asm_file << "    MOV r2, #35" << std::endl;
+  asm_file << "    B label1" << std::endl;
+  asm_file.close();
+
+  auto parsed_program = parse_file(file_name);
+  CHECK(parsed_program[0].get_opcode() == opcodes::MOV);
+  CHECK(parsed_program[1].get_opcode() == opcodes::MOV);
+  CHECK(parsed_program[2].get_opcode() == opcodes::B);
+  REQUIRE(parsed_program[2].get_register_count() == 1);
+  CHECK(parsed_program[2].get_register(0) == 1);
+}
+
+TEST_CASE_METHOD(SourceParserTestFixture, "Label after it's used") {
+  std::ofstream asm_file;
+  std::string file_name = "test_file_label1.s";
+  asm_file.open(file_name);
+  asm_file << "    B label1" << std::endl;
+  asm_file << "    MOV r1, #123" << std::endl;
+  asm_file << "label1" << std::endl;
+  asm_file << "    MOV r2, #35" << std::endl;
+  asm_file.close();
+
+  auto parsed_program = parse_file(file_name);
+  CHECK(parsed_program[0].get_opcode() == opcodes::B);
+  REQUIRE(parsed_program[0].get_register_count() == 1);
+  CHECK(parsed_program[0].get_register(0) == 2);
+  CHECK(parsed_program[1].get_opcode() == opcodes::MOV);
+  CHECK(parsed_program[2].get_opcode() == opcodes::MOV);
 }

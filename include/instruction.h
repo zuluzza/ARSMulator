@@ -83,6 +83,7 @@ public:
   bool is_2nd_operand_register() const;
   uint32_t get_last_register() const;
   size_t get_register_count() const;
+  void append_to_registers(uint8_t index);
 
 private:
   opcodes opcode;
