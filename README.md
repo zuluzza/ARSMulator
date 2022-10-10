@@ -19,12 +19,13 @@ There are two command line options:
 -f Path to the source code file that is to be run
 
 The are following commands that can be given to the command line simulator
-h: display this help
-r: run program until it's stopped
-s: run one instruction
-x{X}: run X instructions and stop
-p: print register values
-m{X}: print memory at address X
+
+h: display this help\
+r: run program until it's stopped\
+s: run one instruction\
+x{X}: run X instructions and stop\
+p: print register values\
+m{X}: print memory at address X\
 q: quit
 
 ## Unit test
