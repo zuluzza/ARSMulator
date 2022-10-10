@@ -7,7 +7,7 @@
 std::string help_text(
     "Available commands:\nh: display this help\nr: run program until it's "
     "stopped\ns: run one instruction\nx{X}: run X instructions and stop\np: "
-    "print register values\nm{X}: print memory at address X");
+    "print register values\nm{X}: print memory at address X\nq: quit");
 
 void cli_app::parse_cli_args(int argc, char *argv[]) {
   int i = 0;

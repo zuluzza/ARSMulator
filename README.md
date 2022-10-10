@@ -9,6 +9,24 @@ Requires CMake and a compatible c++ compiler (tested with clang).  Below command
 
 >cmake --build .
 
+## Running
+
+There's a simple command line tool that can be used to run simulations. After building it can be run by 
+>./src/build/cli_simulator.exe [-m 256] [-f c\:/git/ARSMulator/test.s]
+
+There are two command line options:
+-m Sets the memory size of the simulated machine in bytes (default is 256)
+-f Path to the source code file that is to be run
+
+The are following commands that can be given to the command line simulator
+h: display this help
+r: run program until it's stopped
+s: run one instruction
+x{X}: run X instructions and stop
+p: print register values
+m{X}: print memory at address X
+q: quit
+
 ## Unit test
 
 Unit tests utilize [Catch2](https://github.com/catchorg/Catch2). Instructions to install catch2 can be found in it's [documentation](https://github.com/catchorg/Catch2/blob/devel/docs/cmake-integration.md#installing-catch2-from-git-repository)
