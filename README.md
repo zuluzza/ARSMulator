@@ -35,6 +35,7 @@ Unit tests utilize [Catch2](https://github.com/catchorg/Catch2). Instructions to
 After a succesful build, all unit tests can be run by
 >ctest --output-on-failure
 
-### TODO
-1. add a parser to run .s files
-2. add CLI
+## Integration test
+
+There's an integration test build on docker. It runs a short program via CLI app interface and verifies the run using print commands in CLI app. It can be run locally by
+>docker build . --file integration_test.dockerfile
