@@ -19,8 +19,20 @@ void cli_app::parse_cli_args(int argc, char *argv[]) {
     } else if (strcmp(argv[i], "-m") == 0) {
       i++;
       assert(i < argc);
-      m.~Machine();
       m = Machine(std::stoi(argv[i]));
+    } else if (strcmp(argv[i], "-c") == 0) {
+      i++;
+      assert(i < argc);
+      std::string command_list = argv[i];
+      std::string::size_type pos, prev_pos = 0;
+      while ((pos = command_list.find(",", prev_pos)) != std::string::npos) {
+        command_queue.push_back(command_list.substr(prev_pos, pos - prev_pos));
+        prev_pos = pos + 1;
+      }
+      if (command_list.size() > prev_pos) {
+        command_queue.push_back(
+            command_list.substr(prev_pos, command_list.size() - prev_pos));
+      }
     }
     i++;
   }
@@ -55,6 +67,15 @@ void cli_app::run(int count) {
   Simulator::run_program(program, m, count);
 }
 
+std::string cli_app::get_next_command_from_queue() {
+  if (command_queue.empty()) {
+    return "";
+  }
+  const std::string next_command = command_queue.front();
+  command_queue.pop_front();
+  return next_command;
+}
+
 int main(int argc, char *argv[]) {
   cli_app app;
   app.parse_cli_args(argc, argv);
@@ -63,8 +84,11 @@ int main(int argc, char *argv[]) {
             << std::endl;
   bool cont = true;
   while (cont) {
-    std::string command;
-    std::cin >> command;
+    std::string command = app.get_next_command_from_queue();
+    if (command.empty()) {
+      std::cin >> command;
+    }
+
     if (!app.parse_command(command)) {
       break;
     }
