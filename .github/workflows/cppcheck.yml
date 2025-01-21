@@ -1,0 +1,25 @@
+name: cppcheck
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: cppcheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: cppcheck
+        uses: deep5050/cppcheck-action@main
+        with:
+          enable checks: all
+          generate report: true
+
+      - name: Upload report
+        uses: actions/upload-artifact@v1
+        with:
+          name: report
+          path: output
