@@ -66,7 +66,7 @@ std::vector<Instruction> SourceCodeParser::parse(std::string file_name) {
   return parsed_program;
 }
 
-static std::string remove_leading_spaces(std::string const& line) {
+static std::string remove_leading_spaces(std::string const &line) {
   const auto first_non_whitespace = line.find_first_not_of(' ');
   return line.substr(first_non_whitespace, line.size() - first_non_whitespace);
 }

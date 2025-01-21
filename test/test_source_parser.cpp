@@ -11,7 +11,7 @@ class SourceParserTestFixture {
 public:
   SourceParserTestFixture() : parser() {}
 
-  void verify_symbol(std::string const& symbol, unsigned int expected) {
+  void verify_symbol(std::string const &symbol, unsigned int expected) {
     CHECK(parser.symbol_address_table[symbol] == expected);
   }
 
