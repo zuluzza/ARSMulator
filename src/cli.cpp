@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!app.parse_command(command)) {
-      break;
+      cont = false;
     }
   }
   return 0;

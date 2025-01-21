@@ -101,11 +101,13 @@ bool Machine::execute(Instruction i) {
     case opcodes::NONE:
       std::cout << "Instruction with opcode NONE" << std::endl;
       halt = true;
+      break;
     default:
       std::cout << "Unknown opcode " << static_cast<uint8_t>(i.get_opcode())
                 << std::endl;
     case opcodes::SWI: // intentional fall-through
       halt = true;
+      break;
     }
   }
   // Increment program counter to next instruction
