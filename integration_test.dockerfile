@@ -12,7 +12,7 @@ RUN apt-get install -y git
 
 RUN git clone https://github.com/catchorg/Catch2.git 
 
-RUN cd Catch2 && git checkout v3.1.0 && cmake -Bbuild -H. -DBUILD_TESTING=OFF && cmake --build build/ --target install
+RUN cd Catch2 && git checkout v3.5.0 && cmake -Bbuild -H. -DBUILD_TESTING=OFF && cmake --build build/ --target install
 
 RUN echo "--- Copy files ---"
 
