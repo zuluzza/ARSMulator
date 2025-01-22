@@ -22,7 +22,7 @@ jobs:
 
     - name: Install catch2 v3.1.0
       # Installing instructions from https://github.com/catchorg/Catch2/blob/devel/docs/cmake-integration.md#installing-catch2-from-git-repository
-      run: git clone https://github.com/catchorg/Catch2.git && cd Catch2 && git checkout v3.1.0 && cmake -Bbuild -H. -DBUILD_TESTING=OFF && sudo cmake --build build/ --target install
+      run: git clone https://github.com/catchorg/Catch2.git && cd Catch2 && git checkout v3.5.0 && cmake -Bbuild -H. -DBUILD_TESTING=OFF && sudo cmake --build build/ --target install
 
     - name: Install valgring
       run: sudo apt update && sudo apt install valgrind

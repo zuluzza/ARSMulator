@@ -6,6 +6,7 @@
 #include "machine.h"
 
 #include <cmath>
+#include <cstdint>
 
 class MachineTestFixture {
 public:
@@ -245,9 +246,8 @@ TEST_CASE_METHOD(MachineTestFixture,
 
   m.execute(i);
 
-  CHECK((std::numeric_limits<int32_t>::min() + 1 -
-         std::numeric_limits<int32_t>::max() + 1) ==
-        m.get_register_value(0).to_signed32());
+  // overflowed value is 3
+  CHECK(3 == m.get_register_value(0).to_signed32());
   CHECK((BITMASK_CPSR_V | BITMASK_CPSR_N | BITMASK_CPSR_C) ==
         m.get_current_program_status_register());
 }

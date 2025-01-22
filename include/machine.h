@@ -4,6 +4,7 @@
 #include "instruction.h"
 #include "machine_byte.h"
 
+#include <cstdint>
 #include <stdint.h>
 #include <stdlib.h>
 #include <vector>

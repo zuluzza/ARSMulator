@@ -2,6 +2,7 @@
 #define MACHINE_BYTE_H
 
 #include <bitset>
+#include <cstdint>
 
 #define MAX_31_BITS_VALUE 0x7FFFFFFF
 #define BIT_COUNT 32
